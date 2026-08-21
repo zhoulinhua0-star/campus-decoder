@@ -87,10 +87,10 @@ The key is read only by server-side route handlers. Never expose it through a `N
 | --- | --- | --- |
 | Trigger | `OPENAI_API_KEY` is missing, or a live request fails | A valid server-side key is available |
 | Professor turns | Deterministic scenario responses | OpenAI Responses API |
-| Feedback report | Deterministic, schema-shaped report | Structured output validated with Zod |
+| Feedback report | Representative report that quotes only the submitted transcript | Personalized structured output validated with Zod |
 | Best for | Local development, judging, and repeatable demos | Prompt evaluation and realistic conversation variation |
 
-The fallback is intentional: a missing key should never block someone from testing the full product journey.
+The fallback is intentional: a missing key should never block someone from testing the full product journey. Demo ratings and coaching are clearly labeled as representative rather than personalized AI analysis.
 
 ## How it works
 
@@ -164,15 +164,17 @@ assets/readme/              # Repository presentation assets
 - Complete Office Hours setup, context, practice, feedback, and action flow
 - Responsive, English-first interface with optional Simplified Chinese coaching
 - Deterministic no-key demo and server-side live AI path
+- Demo feedback that quotes the actual transcript without presenting representative ratings as AI analysis
 - Structured feedback, campus-context cards, hints, progress, and copyable action plan
 - Accessible scroll-reveal motion with a reduced-motion fallback
+- Mobile Chromium end-to-end coverage for the complete Office Hours journey
+- Cloudflare Workers/OpenNext build and preview configuration
 
 **Not yet implemented**
 
 - Full Emailing a Professor and Group Project Conflict journeys
 - Accounts, saved practice history, analytics, or a database
 - Voice role-play or institution-specific campus directories
-- Automated test coverage
 - Production evaluation of live prompts with a real API key
 
 ## Commands
@@ -182,15 +184,46 @@ npm run dev      # Start the local development server
 npm run lint     # Run ESLint
 npm run build    # Create a production build
 npm run start    # Serve the production build
+npm run test:e2e # Run the mobile Office Hours Playwright journey
 ```
+
+Install the Playwright Chromium browser once before running the end-to-end test:
+
+```bash
+npx playwright install chromium
+```
+
+## Cloudflare Workers deployment
+
+Campus Decoder uses server-side Route Handlers, so it is not compatible with a GitHub Pages static deployment. The repository is prepared for a full-stack Cloudflare Workers deployment through the OpenNext adapter.
+
+Preview the application locally in Cloudflare's `workerd` runtime:
+
+```bash
+npm run preview:cloudflare
+```
+
+Deploy from an authenticated local environment:
+
+```bash
+npm run deploy:cloudflare
+```
+
+The manual GitHub Actions workflow in `.github/workflows/deploy-cloudflare.yml` provides a second deployment path. Before running it, add these repository secrets:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+
+Set `OPENAI_API_KEY` and the optional `OPENAI_MODEL` as Cloudflare Worker runtime secrets when live AI is ready. The deployment command preserves secrets already configured in the Cloudflare dashboard. A `*.workers.dev` address can be used first, and a custom domain can be attached later.
 
 ## Next milestones
 
-1. Run the complete Office Hours journey in a browser at desktop and mobile widths, including loading and error states.
-2. Exercise the live OpenAI path with an API key and evaluate professor turns, bilingual coaching, and schema reliability.
-3. Add focused tests for validation, demo fallback behavior, and route responses.
-4. Convert Emailing a Professor into the next configuration-driven scenario.
-5. Capture polished screenshots and a sub-five-minute demo for the hackathon submission.
+1. Exercise the live OpenAI path with an API key and evaluate professor turns, bilingual coaching, and schema reliability.
+2. Add focused tests for request validation, schema failures, and route fallback behavior.
+3. Complete hands-on desktop and tablet QA in addition to the automated mobile journey.
+4. Deploy the verified build to Cloudflare Workers and attach a custom domain when available.
+5. Convert Emailing a Professor into the next configuration-driven scenario only after the primary demo is judge-ready.
+6. Capture polished screenshots and a sub-five-minute demo for the hackathon submission.
 
 ## Safety and boundaries
 

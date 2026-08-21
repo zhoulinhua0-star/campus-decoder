@@ -25,6 +25,7 @@ export function OfficeHoursExperience() {
   const [context, setContext] = useState(initialContext);
   const [messages, setMessages] = useState(initialMessages);
   const [report, setReport] = useState<FeedbackReport | null>(null);
+  const [feedbackMode, setFeedbackMode] = useState<"live" | "demo" | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -65,6 +66,7 @@ export function OfficeHoursExperience() {
       if (!response.ok) throw new Error("Feedback request failed");
       const data = (await response.json()) as FeedbackApiResponse;
       setReport(data.report);
+      setFeedbackMode(data.mode);
       setNotice(data.notice);
       setStage("Feedback");
     } catch {
@@ -77,6 +79,7 @@ export function OfficeHoursExperience() {
   function restart() {
     setMessages(initialMessages);
     setReport(null);
+    setFeedbackMode(null);
     setNotice(null);
     setStage("Context");
   }
@@ -87,8 +90,8 @@ export function OfficeHoursExperience() {
       {stage === "Setup" ? <SetupStage context={context} onChange={setContext} onContinue={() => setStage("Context")} /> : null}
       {stage === "Context" ? <ContextStage context={context} onBack={() => setStage("Setup")} onContinue={() => setStage("Practice")} /> : null}
       {stage === "Practice" ? <PracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}
-      {stage === "Feedback" && report ? <FeedbackStage language={context.preferredLanguage} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
-      {stage === "Action" && report ? <ActionStage language={context.preferredLanguage} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}
+      {stage === "Feedback" && report && feedbackMode ? <FeedbackStage language={context.preferredLanguage} mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
+      {stage === "Action" && report && feedbackMode ? <ActionStage language={context.preferredLanguage} mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}
     </>
   );
 }

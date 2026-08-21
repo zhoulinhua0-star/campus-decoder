@@ -98,7 +98,7 @@ export function SetupStage({ context, onChange, onContinue }: SetupStageProps) {
 
           <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[#e4eeeb] pt-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs leading-5 text-[#6a7775]">Avoid sharing names or sensitive personal information.</p>
-            <button className="button-primary shrink-0" type="submit">Decode this situation <ArrowRightIcon className="h-5 w-5" /></button>
+            <button className="button-primary shrink-0" type="submit">See Office Hours guidance <ArrowRightIcon className="h-5 w-5" /></button>
           </div>
         </form>
       </div>
