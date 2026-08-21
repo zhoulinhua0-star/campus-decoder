@@ -76,7 +76,7 @@ End with an immediately usable artifact such as a meeting outline, question list
 
 ## Demo integrity
 
-The application must remain usable without `OPENAI_API_KEY`.
+The application must remain usable without any live-provider API key. `DemoProvider` is the deterministic default and failure fallback.
 
 - Deterministic professor replies must be labeled as a guided demo.
 - Fixed ratings and coaching must be labeled as representative or sample content.
@@ -112,7 +112,7 @@ Do not provide authoritative legal, immigration, medical, mental-health, or univ
 
 - Next.js 16 App Router, React 19, TypeScript.
 - Tailwind CSS 4 with project tokens and component classes in `app/globals.css`.
-- OpenAI JavaScript SDK with the Responses API in server-side Route Handlers.
+- A provider-neutral server-side AI boundary. `KimiProvider` is the planned first live adapter, using Kimi's OpenAI-compatible Chat Completions API and JSON Schema output.
 - Zod for request validation and structured feedback contracts.
 - Playwright for the Office Hours browser journey.
 - OpenNext, Wrangler, and Cloudflare Workers for hosting.
@@ -121,7 +121,11 @@ Primary boundaries:
 
 - `POST /api/practice` generates the next professor turn.
 - `POST /api/feedback` generates the completed-session report and action plan.
-- Keep `OPENAI_API_KEY` server-only. Never expose it through `NEXT_PUBLIC_*` or call OpenAI from client components.
+- Select the runtime through `AI_PROVIDER`; the first supported modes should be `demo` and `kimi`.
+- Keep `MOONSHOT_API_KEY` and all future provider credentials server-only. Never expose them through `NEXT_PUBLIC_*` or call a model provider from client components.
+- Preserve one internal provider contract so routes, shared types, and UI components do not depend on a vendor SDK.
+- Parse and validate every live response with the existing Zod contracts; retry or fall back to `DemoProvider` on invalid, empty, timed-out, or unavailable output.
+- Do not add a second live provider before Kimi is evaluated against English dialogue, bilingual coaching, schema reliability, latency, transcript grounding, and fallback behavior.
 - Keep scenario prompts and behavior in server-side modules.
 - Treat the Zod feedback schema as a UI contract. Update schemas, shared types, prompts, mocks, routes, and rendering together.
 - Client session state is intentionally ephemeral for the MVP.
@@ -146,7 +150,7 @@ Before publishing meaningful changes:
 3. Run `npm run test:e2e` for user-flow changes.
 4. Verify the Cloudflare/OpenNext runtime for deployment changes.
 
-The production target is Cloudflare Workers. GitHub Pages cannot host the server-side API routes, and Vercel is not the selected platform. The manual deployment workflow uses `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets. Keep `OPENAI_API_KEY` as a Cloudflare runtime secret when live AI is enabled.
+The production target is Cloudflare Workers. GitHub Pages cannot host the server-side API routes, and Vercel is not the selected platform. The manual deployment workflow uses `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets. When Kimi support is implemented, keep `MOONSHOT_API_KEY` as a Cloudflare runtime secret.
 
 ## Hackathon priorities
 
