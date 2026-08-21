@@ -9,11 +9,12 @@ function formatActionPlan(plan: FeedbackReport["action_plan"]) {
   return `MEETING GOAL\n${plan.goal}\n\nOPENING\n${plan.opening}\n\nQUESTIONS TO ASK\n${plan.questions.map((question, index) => `${index + 1}. ${question}`).join("\n")}\n\nWHAT TO BRING\n${plan.evidence_to_bring.map((item) => `• ${item}`).join("\n")}\n\nCLOSING\n${plan.closing}`;
 }
 
-export function ActionStage({ report, language, onBack, onRestart }: { report: FeedbackReport; language: CoachingLanguage; onBack: () => void; onRestart: () => void }) {
+export function ActionStage({ report, language, mode, onBack, onRestart }: { report: FeedbackReport; language: CoachingLanguage; mode: "live" | "demo"; onBack: () => void; onRestart: () => void }) {
   const initialPlan = useMemo(() => formatActionPlan(report.action_plan), [report]);
   const [draft, setDraft] = useState(initialPlan);
   const [copied, setCopied] = useState(false);
   const chinese = language === "简体中文";
+  const demo = mode === "demo";
 
   async function copyPlan() {
     try {
@@ -29,15 +30,15 @@ export function ActionStage({ report, language, onBack, onRestart }: { report: F
     <section className="page-shell py-10 sm:py-14">
       <div className="mx-auto max-w-[980px]">
         <div className="text-center">
-          <span className="eyebrow">{chinese ? "从练习到行动" : "From practice to action"}</span>
-          <h1 className="font-display mx-auto mt-5 max-w-[760px] text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">{chinese ? "把这份提纲带进真正的 Office Hours。" : "Take this outline into the real office hour."}</h1>
-          <p className="mx-auto mt-5 max-w-[680px] text-lg leading-8 text-[#59706e]">{chinese ? "这是一个起点，不是必须照读的脚本。请修改成符合你表达方式的版本。" : "This is a starting point, not a script you must follow. Edit it until it sounds like you."}</p>
+          <span className="eyebrow">{demo ? (chinese ? "Demo 行动计划" : "Representative demo action plan") : (chinese ? "从练习到行动" : "From practice to action")}</span>
+          <h1 className="font-display mx-auto mt-5 max-w-[760px] text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">{demo ? (chinese ? "修改这份示例，让它符合你的真实情况。" : "Adapt this sample outline to your real situation.") : (chinese ? "把这份提纲带进真正的 Office Hours。" : "Take this outline into the real office hour.")}</h1>
+          <p className="mx-auto mt-5 max-w-[680px] text-lg leading-8 text-[#59706e]">{demo ? (chinese ? "其中的目标来自你的设置，但具体建议仍是代表性示例；连接 Live AI 后才会进行个性化分析。" : "The goal comes from your setup, but the coaching remains representative until live AI is connected.") : (chinese ? "这是一个起点，不是必须照读的脚本。请修改成符合你表达方式的版本。" : "This is a starting point, not a script you must follow. Edit it until it sounds like you.")}</p>
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_270px]">
           <div className="card overflow-hidden">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e4eeeb] px-5 py-4 sm:px-7">
-              <div><h2 className="text-lg font-extrabold text-[#0b2e2a]">{chinese ? "我的会面提纲" : "My meeting outline"}</h2><p className="mt-0.5 text-xs text-[#6a7775]">{chinese ? "可以直接编辑" : "Editable before you use it"}</p></div>
+              <div><h2 className="text-lg font-extrabold text-[#0b2e2a]">{demo ? (chinese ? "示例会面提纲" : "Sample meeting outline") : (chinese ? "我的会面提纲" : "My meeting outline")}</h2><p className="mt-0.5 text-xs text-[#6a7775]">{chinese ? "可以直接编辑" : "Editable before you use it"}</p></div>
               <button className="button-secondary !min-h-11 !px-4 text-sm" onClick={copyPlan} type="button">{copied ? <CheckIcon className="h-4 w-4" /> : <CopyIcon className="h-4 w-4" />}{copied ? (chinese ? "已复制" : "Copied") : (chinese ? "复制提纲" : "Copy outline")}</button>
             </div>
             <label className="sr-only" htmlFor="action-plan">Editable office hours meeting outline</label>

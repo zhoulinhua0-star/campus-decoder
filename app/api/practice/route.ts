@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       professorReply: getMockProfessorReply(messages),
       mode: "demo",
-      notice: "Demo responses are active. Add OPENAI_API_KEY for live role-play.",
+      notice: "Guided demo is active. Professor replies follow a short sample path until live AI is connected.",
     });
   }
 

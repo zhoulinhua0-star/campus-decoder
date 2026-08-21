@@ -17,9 +17,10 @@ export function ContextStage({ context, onBack, onContinue }: { context: Practic
     <section className="page-shell py-10 sm:py-14">
       <div className="mx-auto max-w-[960px]">
         <div className="text-center">
-          <span className="eyebrow">{chinese ? "先解码，再练习" : "Decode before you practice"}</span>
+          <span className="eyebrow">{chinese ? "Office Hours 基础说明" : "General Office Hours guidance"}</span>
           <h1 className="font-display mx-auto mt-5 max-w-[760px] text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">{chinese ? "去 Office Hours 不是在浪费教授的时间。" : "Going to office hours is not wasting your professor’s time."}</h1>
           <p className="mx-auto mt-5 max-w-[720px] text-lg leading-8 text-[#59706e]">{chinese ? "你不需要证明自己遇到了“足够严重”的问题。清楚说明目标，并提出具体问题，就已经是一次有建设性的会面。" : "You do not need to prove that your problem is serious enough. A clear goal and a specific question are enough to make the meeting constructive."}</p>
+          <p className="mx-auto mt-3 max-w-[720px] text-sm leading-6 text-[#6a7775]">{chinese ? "此步骤解释通用校园规范；它目前不是对你所填内容的 AI 个性化分析。" : "This step explains the general campus norm; it is not yet AI-personalized analysis of your entries."}</p>
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">

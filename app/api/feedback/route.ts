@@ -16,9 +16,9 @@ export async function POST(request: Request) {
 
   if (!openai) {
     return NextResponse.json({
-      report: getMockFeedback(context.preferredLanguage),
+      report: getMockFeedback(context, messages),
       mode: "demo",
-      notice: "Demo feedback is active. Add OPENAI_API_KEY for personalized analysis.",
+      notice: "Sample feedback is active. Quotes come from your transcript; ratings and coaching are representative until live AI is connected.",
     });
   }
 
@@ -37,9 +37,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ report: response.output_parsed, mode: "live", notice: null });
   } catch {
     return NextResponse.json({
-      report: getMockFeedback(context.preferredLanguage),
+      report: getMockFeedback(context, messages),
       mode: "demo",
-      notice: "Live feedback was unavailable, so a representative demo report is shown.",
+      notice: "Live feedback was unavailable. Quotes come from your transcript, but the ratings and coaching shown are representative.",
     });
   }
 }

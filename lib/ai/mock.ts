@@ -1,4 +1,4 @@
-import type { CoachingLanguage, FeedbackReport, PracticeMessage } from "@/types/practice";
+import type { FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
 
 export function getMockProfessorReply(messages: PracticeMessage[]) {
   const studentTurns = messages.filter((message) => message.role === "user");
@@ -16,47 +16,56 @@ export function getMockProfessorReply(messages: PracticeMessage[]) {
   return "That revision direction sounds more specific. Before we finish, what is one question you still want answered for your next essay?";
 }
 
-export function getMockFeedback(language: CoachingLanguage): FeedbackReport {
-  const chinese = language === "简体中文";
+export function getMockFeedback(context: PracticeContext, messages: PracticeMessage[]): FeedbackReport {
+  const chinese = context.preferredLanguage === "简体中文";
+  const studentResponses = messages.filter((message) => message.role === "user").map((message) => message.content);
+  const firstResponse = studentResponses[0] || "No student response was recorded.";
+  const latestResponse = studentResponses.at(-1) || firstResponse;
+  const latestProfessorReply = messages.filter((message) => message.role === "assistant").at(-1)?.content
+    || "What would you like to discuss?";
+  const sourceToBring = context.professorFeedback.trim()
+    ? "The professor feedback you provided"
+    : "Any written feedback or notes you have";
+
   return {
     summary: chinese
-      ? "你把谈话重点从“争取分数”转向了“理解反馈并改进”，这让交流显得积极而有建设性。下一步可以减少开场时的过度道歉，并更早指出具体想讨论的评语。"
-      : "You shifted the conversation from disputing a grade to understanding feedback and improving. The next step is to reduce the apology in your opening and name the exact feedback you want to discuss sooner.",
+      ? "这是代表性的 Demo 反馈，用于展示 Campus Decoder 的反馈结构。下面引用的表达来自你刚才的练习，但评分与建议尚未经过 AI 个性化分析。"
+      : "This representative demo shows how Campus Decoder structures feedback. The quoted responses come from your practice, but the ratings and coaching have not been personalized by AI.",
     strengths: chinese
-      ? ["清楚表达了希望改进下一篇论文，而不只是询问分数。", "认真回应教授的问题，并尝试用自己的话解释写作意图。"]
-      : ["You made improvement—not the grade itself—the purpose of the meeting.", "You responded thoughtfully and explained what you were trying to do in the essay."],
+      ? ["你完成了一次 Office Hours 练习，并留下了可以继续修改的真实表达。", `你的练习围绕一个明确目标展开：“${context.goal}”`]
+      : ["You completed an Office Hours practice and now have real wording you can revise.", `Your practice was anchored in a stated goal: “${context.goal}”`],
     improvements: [
       {
         dimension: "Tone",
-        observation: chinese ? "开场中的多次道歉让你的合理请求听起来像是一种打扰。" : "Repeated apologies made a reasonable request sound like an interruption.",
-        why_it_matters: chinese ? "Office Hours 本来就是用于这类讨论；礼貌不需要以贬低自己的需求为代价。" : "Office hours exist for this kind of conversation; politeness does not require minimizing your need for help.",
-        original_response: "Sorry to bother you. I know you are probably very busy.",
-        suggested_response: "Thanks for meeting with me. I’d like to better understand your feedback and improve my next essay.",
+        observation: chinese ? "检查开场是否直接说明了会面的目的，同时保持自然和礼貌。" : "Check whether the opening states the meeting’s purpose directly while staying natural and polite.",
+        why_it_matters: chinese ? "清楚的开场能帮助教授迅速理解你需要什么，也不需要通过过度道歉来证明礼貌。" : "A clear opening helps the professor understand what you need without requiring excessive apology.",
+        original_response: firstResponse,
+        suggested_response: "Thanks for meeting with me. I’d like to better understand the feedback and decide what to improve next.",
       },
       {
         dimension: "Specificity",
-        observation: chinese ? "你提出了想了解反馈，但没有立刻指出最困惑的具体部分。" : "You asked to understand the feedback without immediately naming the part that confused you most.",
-        why_it_matters: chinese ? "具体问题可以帮助教授给出更有针对性的解释，也体现你提前做了准备。" : "A specific question helps the professor give focused guidance and shows that you prepared.",
-        original_response: "I don’t really understand why this part was wrong.",
-        suggested_response: "Could we look at your comment about my thesis being too broad? I’d like to understand what a more focused version would do differently.",
+        observation: chinese ? "检查问题是否指向了一条具体评语、段落或下一步修改。" : "Check whether the question points to a specific comment, passage, or next revision step.",
+        why_it_matters: chinese ? "具体问题更容易得到有针对性的解释，也能让会面产生一个可执行的结果。" : "Specific questions make focused guidance and an actionable outcome more likely.",
+        original_response: latestResponse,
+        suggested_response: "Could we look at one specific comment together? I’d like to understand what I should change in my next revision.",
       },
     ],
     ratings: { clarity: 4, tone: 3, specificity: 3, initiative: 4, campus_fit: 4 },
     campus_context: [{
-      literal_meaning: chinese ? "教授问：“你最想先看哪一部分反馈？”" : "The professor asks, “Which part of the feedback should we look at first?”",
+      literal_meaning: chinese ? `教授在练习中说：“${latestProfessorReply}”` : `In the practice, the professor says: “${latestProfessorReply}”`,
       likely_context: chinese ? "这通常是在邀请你设定谈话重点，而不是在考验你是否有资格来 Office Hours。" : "This commonly invites you to set the meeting’s focus; it is not a test of whether you deserve to be there.",
       constructive_next_move: chinese ? "指出一条具体评语、相关段落，以及你已经尝试理解的地方。" : "Name one written comment, the related paragraph, and what you have already tried to understand.",
     }],
     action_plan: {
-      goal: "Understand how to make my thesis more focused and apply the feedback to my next essay.",
-      opening: "Thanks for meeting with me. I’d like to understand your feedback on my thesis and make a concrete plan for improving my next essay.",
+      goal: context.goal,
+      opening: "Thanks for meeting with me. I’d like to better understand the feedback and leave with a concrete next step.",
       questions: [
-        "Could we look at your comment that my thesis was too broad?",
-        "What would a more focused thesis help the reader understand?",
-        "What is one revision strategy you recommend I practice next?",
+        "Could we look at one specific comment together?",
+        "What is one change you recommend I try next?",
+        "How can I tell whether I have applied that feedback successfully?",
       ],
-      evidence_to_bring: ["The marked essay", "The assignment prompt", "One attempted revision of the thesis"],
-      closing: "Thank you—my next step is to revise the thesis using this approach. Would it be okay if I bring one follow-up question to the next office hour?",
+      evidence_to_bring: [sourceToBring, "The assignment or course prompt", "One example or attempted revision"],
+      closing: "Thank you—my next step is to apply this feedback in my next revision. Would it be okay if I bring one follow-up question to the next office hour?",
     },
   };
 }
