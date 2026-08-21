@@ -1,203 +1,162 @@
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="Campus Decoder helps international students understand hidden university norms, practice campus conversations, receive structured feedback, and leave with an action plan.">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Campus Decoder helps international students understand hidden university norms, practice an Office Hours conversation, receive structured feedback, and leave with an action plan.">
 </p>
 
 <p align="center">
-  <strong>A bilingual campus communication coach for the rules no one teaches.</strong><br>
-  Campus Decoder begins with Chinese international students and is designed to grow to other international and first-generation students.
+  <strong>A campus communication coach for the university rules no one teaches.</strong><br>
+  Understand the context, practice the conversation, receive supportive feedback, and leave ready to act.
 </p>
 
 <p align="center">
-  <code>Track 2 · Equity in Education</code>
-  <code>Working Office Hours vertical slice</code>
+  <a href="https://campus-decoder.zhoulinhua0.workers.dev"><strong>Open the live demo →</strong></a>
+</p>
+
+<p align="center">
+  <code>Equity in Education</code>
+  <code>Next.js 16</code>
+  <code>Cloudflare Workers</code>
   <code>Demo works without an API key</code>
 </p>
 
-> **Prototype status:** The Office Hours journey is fully implemented. Emailing a Professor and Group Project Conflict are visible previews for the next scenario expansions.
+> **Current status:** The complete Office Hours journey is live. Emailing a Professor and Group Project Conflict are visible previews. Production currently uses the clearly labeled deterministic demo path. Kimi is the selected future live-AI provider, but that integration has not been implemented yet.
 
-## Why Campus Decoder exists
+## Try the working product
+
+Visit **[campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)** and:
+
+1. Choose **Practice Office Hours**.
+2. Describe a course, concern, and goal.
+3. Review the campus norm behind the situation.
+4. Practice your own response to the professor.
+5. Finish with transcript-grounded feedback and an editable meeting outline.
+
+The public deployment, Office Hours route, practice API, and feedback API have been verified on Cloudflare Workers.
+
+## The problem
 
 English proficiency is not the same as cultural fluency.
 
-International students can arrive academically prepared while still lacking access to the unwritten knowledge that culturally familiar students often acquire informally: what office hours are for, how to ask a professor for clarification, when to follow up with a teammate, or which campus resource can help.
+Chinese international students can arrive academically prepared while still lacking access to the university “hidden curriculum”: what Office Hours are for, how to ask a professor for clarification, when to follow up, and how to advocate for themselves without feeling impolite or confrontational.
 
-Campus Decoder treats that gap as an **educational equity problem**, not a translation problem. It turns hidden institutional context into a guided learning loop:
+Campus Decoder treats this as an **educational equity problem**, not a translation problem. Its learning loop is:
 
 > **Understand → Practice → Feedback → Act**
 
-The hackathon MVP focuses on a Chinese first-year student preparing for office hours after receiving a disappointing essay grade. The goal is not to hand her a perfect script; it is to help her understand the situation, rehearse her own response, and leave with a next step she can confidently use.
-
-## See the transformation
-
-| Before practice | Campus Decoder adds | Ready for real life |
-| --- | --- | --- |
-| “Sorry to bother you. I was confused about my grade.” | Office hours are an expected place to discuss feedback; arriving with specific questions signals initiative. | “Thanks for meeting with me. I’d like to understand two comments on my thesis and make a plan for my next essay.” |
-| Anxiety about appearing confrontational | A safe AI-professor role-play and supportive, cross-cultural feedback | An editable outline with an opening, questions, evidence to bring, and a closing |
-
-This transformation—not a generic chat window—is the core product proof.
+The primary scenario follows a newly arrived first-year student who receives disappointing or unclear essay feedback and does not know what to expect in Office Hours. The product helps the student understand the norm, rehearse their own words, and prepare a concrete next move.
 
 ## One journey, five stages
 
-1. **Setup** — Add the course, goal, what happened, coaching language, and optional professor feedback.
-2. **Campus context** — Learn what office hours are for and why attending is appropriate.
-3. **Practice** — Respond to a simulated professor in English and request a hint only when needed.
-4. **Feedback** — Review clarity, tone, specificity, initiative, and campus-context fit.
-5. **Action plan** — Edit and copy a meeting outline for the real conversation.
+1. **Setup** — Add the course, goal, what happened, concern, coaching language, and optional professor feedback.
+2. **Campus context** — Learn what Office Hours are for and what a constructive next step may be.
+3. **Practice** — Respond to a simulated professor in English; request a hint only when needed.
+4. **Feedback** — Review clarity, tone, specificity, initiative, and campus fit.
+5. **Action** — Edit and copy a meeting outline for the real conversation.
 
-## What makes it different
+## Why it is different
 
-- **Practice before prescription.** The student formulates a response before seeing an improved alternative.
-- **Campus context, not mind-reading.** Guidance separates literal language, likely university context, and a constructive next move without claiming certainty about another person’s intentions.
-- **Structured feedback.** The report identifies strengths and the two highest-value improvements across five scenario-specific dimensions.
-- **Actionable output.** Every session ends with an editable artifact rather than more information to interpret.
-- **English-first, multilingual coaching.** Real-world dialogue stays in English while explanations can be returned in the student’s selected coaching language.
+- **Practice before prescription.** The student writes a response before seeing an alternative.
+- **Context without mind-reading.** Guidance separates literal language, likely campus context, uncertainty, and a constructive next move.
+- **Transcript-grounded feedback.** Original-response comparisons quote only what the student actually submitted.
+- **Structured coaching.** The report identifies two strengths and the two highest-value improvements across five dimensions.
+- **Action over information.** Every session ends with an editable real-world artifact.
+- **English-first, multilingual coaching.** Campus dialogue stays in English while explanations can follow the selected coaching language.
 
-## Run it locally
+## Honest demo mode
+
+| | Current production | Planned live AI |
+| --- | --- | --- |
+| Provider | Deterministic demo | Kimi API, called server-side |
+| Professor turns | Guided Office Hours sample path | Personalized conversation in English |
+| Feedback | Representative coaching grounded in the submitted transcript | Structured bilingual coaching validated with Zod |
+| Failure behavior | Remains fully usable without an external service | Falls back safely to the deterministic demo |
+| Labeling | Explicitly marked as guided or sample content | Marked as live AI |
+| Best use | Repeatable demos, judging, and development | Prompt evaluation and realistic variation |
+
+Demo ratings never pretend to be personalized AI analysis, and demo feedback never invents student quotations.
+
+## How it works
+
+```mermaid
+flowchart LR
+    A["Student context"] --> B["Five-stage Office Hours UI"]
+    B --> C["POST /api/practice"]
+    B --> D["POST /api/feedback"]
+    C --> E{"Live AI available?"}
+    D --> E
+    E -- "Yes" --> F["Configured server-side provider"]
+    E -- "No" --> G["Deterministic demo"]
+    F --> H["Structured feedback"]
+    G --> H
+    H --> I["Editable action plan"]
+```
+
+| Layer | Choice |
+| --- | --- |
+| Application | Next.js 16 App Router, React 19, TypeScript |
+| Styling | Tailwind CSS 4 and project design tokens |
+| AI | Deterministic demo today; Kimi selected for the future live path |
+| Validation | Zod request and feedback contracts |
+| Testing | Playwright mobile Chromium journey |
+| Hosting | OpenNext, Wrangler, and Cloudflare Workers |
+| Persistence | None in the MVP; session state is client-side |
+
+## Run locally
 
 Requirements: **Node.js 20 or newer**.
-
-The complete demo works without an OpenAI API key:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), choose **Practice Office Hours**, and complete the guided flow.
+Open [http://localhost:3000](http://localhost:3000). The full demo works without external services or an API key.
 
-To use live AI responses instead, create a local environment file:
+## Planned Kimi integration
 
-```bash
-cp .env.example .env.local
-```
+Kimi will become the primary live provider because its OpenAI-compatible Chat Completions API supports JSON Schema output, which fits the existing Zod feedback contract. The provider migration is planned, not yet implemented.
 
-Then add:
+The intended server-only configuration is:
 
 ```dotenv
-OPENAI_API_KEY=your_api_key_here
-# Optional; the project provides a default model.
-OPENAI_MODEL=your_preferred_model
+AI_PROVIDER=kimi
+MOONSHOT_API_KEY=your_server_side_key
 ```
 
-The key is read only by server-side route handlers. Never expose it through a `NEXT_PUBLIC_` variable or client component.
-
-## Demo mode and live mode
-
-| | Demo mode | Live mode |
-| --- | --- | --- |
-| Trigger | `OPENAI_API_KEY` is missing, or a live request fails | A valid server-side key is available |
-| Professor turns | Deterministic scenario responses | OpenAI Responses API |
-| Feedback report | Representative report that quotes only the submitted transcript | Personalized structured output validated with Zod |
-| Best for | Local development, judging, and repeatable demos | Prompt evaluation and realistic conversation variation |
-
-The fallback is intentional: a missing key should never block someone from testing the full product journey. Demo ratings and coaching are clearly labeled as representative rather than personalized AI analysis.
-
-## How it works
-
-```mermaid
-flowchart LR
-    A["Student context"] --> B["Five-stage practice UI"]
-    B --> C["POST /api/practice"]
-    B --> D["POST /api/feedback"]
-    C --> E{"Live AI available?"}
-    D --> E
-    E -- "Yes" --> F["OpenAI Responses API"]
-    E -- "No" --> G["Deterministic demo responses"]
-    F --> H["UI-ready response data"]
-    G --> H
-    H --> I["Feedback + editable action plan"]
-```
-
-### Technology
-
-| Layer | Choice |
-| --- | --- |
-| Application | Next.js 16 App Router, React 19, TypeScript |
-| Styling | Tailwind CSS 4 with project design tokens |
-| AI | OpenAI JavaScript SDK and Responses API |
-| Validation | Zod and strict feedback schemas |
-| Motion | Native `IntersectionObserver` scroll reveal with reduced-motion support |
-| Persistence | None in the MVP; session state is client-side |
-
-This is a prompt-driven application, not a fine-tuned model. Scenario-specific system prompts, strict output contracts, and product UI shape the experience; they can be revised independently of the base model.
-
-## AI behavior and language contract
-
-| Output | Language |
-| --- | --- |
-| Simulated professor dialogue | English |
-| Suggested student responses and real-world action plan | English |
-| Campus-context explanations and coaching feedback | Selected coaching language (`English` or `简体中文`) |
-
-Prompts should remain supportive, specific, and culturally aware. They must:
-
-- treat cultural patterns as context rather than stereotypes;
-- preserve multiple valid communication styles and the student’s agency;
-- avoid promises about grades, accommodations, or another person’s intentions;
-- direct policy, legal, medical, immigration, and mental-health questions to qualified campus resources.
-
-## Project structure
+The implementation should expose one internal provider contract with three adapters:
 
 ```text
-app/
-  api/
-    feedback/route.ts       # Structured feedback and action plan
-    practice/route.ts       # Next simulated professor turn
-  practice/office-hours/    # Complete five-stage practice journey
-  page.tsx                  # Product story and scenario selection
-components/
-  practice/                 # Setup, context, practice, feedback, action
-  scenario-card.tsx
-  scroll-reveal.tsx
-  site-header.tsx
-lib/
-  ai/                       # Client, prompts, schemas, demo fallback
-types/
-  practice.ts               # Shared request, transcript, and report types
-assets/readme/              # Repository presentation assets
+DemoProvider       # Default, deterministic, no external service
+KimiProvider       # Planned primary live provider
+DeepSeekProvider   # Optional later provider, not part of the first migration
 ```
 
-## Current scope
+The migration must preserve the existing `/api/practice` and `/api/feedback` contracts, validate every structured response with Zod, and fall back to `DemoProvider` when live generation fails. API keys must remain in server-side runtime secrets and must never use a `NEXT_PUBLIC_*` variable.
 
-**Implemented**
+The current source still contains an unexercised OpenAI Responses API adapter. It should be replaced by the provider abstraction rather than extended as the production path.
 
-- Complete Office Hours setup, context, practice, feedback, and action flow
-- Responsive, English-first interface with optional Simplified Chinese coaching
-- Deterministic no-key demo and server-side live AI path
-- Demo feedback that quotes the actual transcript without presenting representative ratings as AI analysis
-- Structured feedback, campus-context cards, hints, progress, and copyable action plan
-- Accessible scroll-reveal motion with a reduced-motion fallback
-- Mobile Chromium end-to-end coverage for the complete Office Hours journey
-- Cloudflare Workers/OpenNext build and preview configuration
-
-**Not yet implemented**
-
-- Full Emailing a Professor and Group Project Conflict journeys
-- Accounts, saved practice history, analytics, or a database
-- Voice role-play or institution-specific campus directories
-- Production evaluation of live prompts with a real API key
-
-## Commands
+## Verify changes
 
 ```bash
-npm run dev      # Start the local development server
-npm run lint     # Run ESLint
-npm run build    # Create a production build
-npm run start    # Serve the production build
-npm run test:e2e # Run the mobile Office Hours Playwright journey
+npm run lint
+npm run build
+npm run test:e2e
 ```
 
-Install the Playwright Chromium browser once before running the end-to-end test:
+Install the Playwright browser once before the end-to-end test:
 
 ```bash
 npx playwright install chromium
 ```
 
-## Cloudflare Workers deployment
+The E2E test completes the mobile Office Hours journey from the landing page through the sample action plan.
 
-Campus Decoder uses server-side Route Handlers, so it is not compatible with a GitHub Pages static deployment. The repository is prepared for a full-stack Cloudflare Workers deployment through the OpenNext adapter.
+## Deploy to Cloudflare Workers
 
-Preview the application locally in Cloudflare's `workerd` runtime:
+The production site is:
+
+**[https://campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
+
+Preview the OpenNext build in Cloudflare's local `workerd` runtime:
 
 ```bash
 npm run preview:cloudflare
@@ -209,25 +168,54 @@ Deploy from an authenticated local environment:
 npm run deploy:cloudflare
 ```
 
-The manual GitHub Actions workflow in `.github/workflows/deploy-cloudflare.yml` provides a second deployment path. Before running it, add these repository secrets:
+The manual workflow at `.github/workflows/deploy-cloudflare.yml` deploys `main` using these GitHub repository secrets:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-Set `OPENAI_API_KEY` and the optional `OPENAI_MODEL` as Cloudflare Worker runtime secrets when live AI is ready. The deployment command preserves secrets already configured in the Cloudflare dashboard. A `*.workers.dev` address can be used first, and a custom domain can be attached later.
+When the Kimi integration is implemented, store `MOONSHOT_API_KEY` as a Cloudflare Worker secret. The deploy command preserves existing runtime secrets. GitHub Pages is not supported because the application requires server-side Route Handlers.
 
-## Next milestones
+## Project map
 
-1. Exercise the live OpenAI path with an API key and evaluate professor turns, bilingual coaching, and schema reliability.
-2. Add focused tests for request validation, schema failures, and route fallback behavior.
-3. Complete hands-on desktop and tablet QA in addition to the automated mobile journey.
-4. Deploy the verified build to Cloudflare Workers and attach a custom domain when available.
-5. Convert Emailing a Professor into the next configuration-driven scenario only after the primary demo is judge-ready.
-6. Capture polished screenshots and a sub-five-minute demo for the hackathon submission.
+```text
+app/
+  api/
+    feedback/route.ts       # Structured feedback and action plan
+    practice/route.ts       # Next simulated professor turn
+  practice/office-hours/    # Complete five-stage journey
+  page.tsx                  # Product story and scenario selection
+components/
+  practice/                 # Setup, context, practice, feedback, action
+lib/
+  ai/                       # Client, prompts, schemas, demo fallback
+tests/e2e/                  # Office Hours browser journey
+types/
+  practice.ts               # Shared UI and API contracts
+wrangler.jsonc              # Cloudflare Worker configuration
+open-next.config.ts         # OpenNext adapter configuration
+```
 
-## Safety and boundaries
+## Current limits
 
-Campus Decoder provides educational practice, not official university, immigration, legal, medical, or mental-health advice. Generated guidance may be incomplete or wrong, and users should verify policy-sensitive information with the relevant institution or qualified professional. The product never sends a real-world message without explicit user review.
+- Kimi integration and the provider abstraction are not implemented yet.
+- The current unexercised OpenAI adapter remains in the source until that migration.
+- Campus Context is currently general guidance rather than AI-personalized interpretation.
+- Emailing a Professor and Group Project Conflict are not implemented flows.
+- There is no authentication, saved history, database, analytics, or voice role-play.
+- Desktop, tablet, keyboard, long-content, and reduced-motion QA remain to be completed.
+
+## Next
+
+1. Validate the Office Hours narrative with Chinese and other international students new to U.S. university culture.
+2. Replace the current single-provider client with `DemoProvider` and `KimiProvider`, keeping DeepSeek as a later option.
+3. Test Kimi professor turns, bilingual coaching, schema reliability, latency, and safe fallback behavior.
+4. Personalize Campus Context using the student's situation and optional professor feedback.
+5. Complete accessibility and cross-device QA, then capture screenshots and record the hackathon demo.
+6. Implement Emailing a Professor only after the primary journey is validated.
+
+## Safety
+
+Campus Decoder provides educational practice, not official university, immigration, legal, medical, or mental-health advice. Users should verify policy-sensitive guidance with the relevant institution or qualified professional. The product never sends a real-world message without explicit review.
 
 ## License
 
