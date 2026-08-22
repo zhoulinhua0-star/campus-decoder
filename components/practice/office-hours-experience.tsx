@@ -9,7 +9,16 @@ import { PracticeStage as Stage, ProgressSteps } from "@/components/practice/pro
 import { SetupStage } from "@/components/practice/setup-stage";
 import type { FeedbackApiResponse, FeedbackReport, PracticeApiResponse, PracticeContext, PracticeMessage } from "@/types/practice";
 
-const initialContext: PracticeContext = {
+const emptyContext: PracticeContext = {
+  course: "",
+  goal: "",
+  whatHappened: "",
+  concern: "",
+  professorFeedback: "",
+  preferredLanguage: "English",
+};
+
+const sampleContext: PracticeContext = {
   course: "First-Year Writing Seminar",
   goal: "Understand the feedback and improve my next essay",
   whatHappened: "I received a C+ on my first essay. The grade was lower than I expected, and I want to understand what to work on next.",
@@ -22,7 +31,8 @@ const initialMessages: PracticeMessage[] = [{ role: "assistant", content: "Hi, c
 
 export function OfficeHoursExperience() {
   const [stage, setStage] = useState<Stage>("Setup");
-  const [context, setContext] = useState(initialContext);
+  const [context, setContext] = useState(emptyContext);
+  const [contextSource, setContextSource] = useState<"mine" | "sample">("mine");
   const [messages, setMessages] = useState(initialMessages);
   const [report, setReport] = useState<FeedbackReport | null>(null);
   const [feedbackMode, setFeedbackMode] = useState<"live" | "demo" | null>(null);
@@ -31,6 +41,12 @@ export function OfficeHoursExperience() {
   const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [stage]);
+
+  function selectContextSource(source: "mine" | "sample") {
+    if (source === contextSource) return;
+    setContextSource(source);
+    setContext(source === "sample" ? sampleContext : emptyContext);
+  }
 
   async function sendMessage(content: string) {
     const nextMessages: PracticeMessage[] = [...messages, { role: "user", content }];
@@ -87,7 +103,7 @@ export function OfficeHoursExperience() {
   return (
     <>
       <ProgressSteps current={stage} />
-      {stage === "Setup" ? <SetupStage context={context} onChange={setContext} onContinue={() => setStage("Context")} /> : null}
+      {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={setContext} onContinue={() => setStage("Context")} onSelectContextSource={selectContextSource} /> : null}
       {stage === "Context" ? <ContextStage context={context} onBack={() => setStage("Setup")} onContinue={() => setStage("Practice")} /> : null}
       {stage === "Practice" ? <PracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}
       {stage === "Feedback" && report && feedbackMode ? <FeedbackStage language={context.preferredLanguage} mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}

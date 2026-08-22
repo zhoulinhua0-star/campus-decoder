@@ -7,6 +7,17 @@ test("completes the honest Office Hours demo flow", async ({ page }) => {
   await page.getByRole("link", { name: "Practice office hours" }).click();
 
   await expect(page.getByText("Step 1 of 5")).toBeVisible();
+  await expect(page.getByLabel("Course or subject")).toHaveValue("");
+  await expect(page.getByRole("button", { name: /Use my situation/ })).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByRole("button", { name: /Try the sample/ }).click();
+  await expect(page.getByLabel("Course or subject")).toHaveValue("First-Year Writing Seminar");
+  await expect(page.getByRole("button", { name: /Try the sample/ })).toHaveAttribute("aria-pressed", "true");
+
+  await page.getByRole("button", { name: /Use my situation/ }).click();
+  await expect(page.getByLabel("Course or subject")).toHaveValue("");
+
+  await page.getByRole("button", { name: /Try the sample/ }).click();
   await page.getByRole("button", { name: "See Office Hours guidance" }).click();
 
   await expect(page.getByRole("heading", { name: "Going to office hours is not wasting your professor’s time." })).toBeVisible();

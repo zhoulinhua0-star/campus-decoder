@@ -25,7 +25,7 @@
 Visit **[campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)** and:
 
 1. Choose **Practice Office Hours**.
-2. Describe a course, concern, and goal.
+2. Choose your own situation or load the sample, then describe a course, concern, and goal.
 3. Review the campus norm behind the situation.
 4. Practice your own response to the professor.
 5. Finish with transcript-grounded feedback and an editable meeting outline.

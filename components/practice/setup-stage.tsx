@@ -1,24 +1,31 @@
 "use client";
 
 import { FormEvent, useRef, useState } from "react";
-import { ArrowRightIcon, CheckIcon } from "@/components/icons";
+import { ArrowRightIcon, CheckIcon, ScenarioIcon, SparkIcon } from "@/components/icons";
 import type { PracticeContext } from "@/types/practice";
 
 type SetupStageProps = {
   context: PracticeContext;
+  contextSource: "mine" | "sample";
   onChange: (context: PracticeContext) => void;
   onContinue: () => void;
+  onSelectContextSource: (source: "mine" | "sample") => void;
 };
 
 type Errors = Partial<Record<"course" | "goal" | "whatHappened", string>>;
 
-export function SetupStage({ context, onChange, onContinue }: SetupStageProps) {
+export function SetupStage({ context, contextSource, onChange, onContinue, onSelectContextSource }: SetupStageProps) {
   const [errors, setErrors] = useState<Errors>({});
   const errorRef = useRef<HTMLDivElement>(null);
 
   function update<K extends keyof PracticeContext>(key: K, value: PracticeContext[K]) {
     onChange({ ...context, [key]: value });
     if (key in errors) setErrors((current) => ({ ...current, [key]: undefined }));
+  }
+
+  function selectContextSource(source: "mine" | "sample") {
+    setErrors({});
+    onSelectContextSource(source);
   }
 
   function submit(event: FormEvent) {
@@ -51,6 +58,47 @@ export function SetupStage({ context, onChange, onContinue }: SetupStageProps) {
         </div>
 
         <form className="card p-5 sm:p-8" noValidate onSubmit={submit}>
+          <fieldset className="mb-8 border-b border-[#e4eeeb] pb-8">
+            <legend className="text-lg font-extrabold text-[#0b2e2a]">How would you like to begin?</legend>
+            <p className="mt-1 text-sm leading-6 text-[#59706e]">Use empty fields for your own situation, or load a sample for a quick guided demo.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button
+                aria-pressed={contextSource === "mine"}
+                className={`min-h-28 rounded-2xl border p-4 text-left transition-colors ${contextSource === "mine" ? "border-[#0b766d] bg-[#eef7f3]" : "border-[#cfe0dc] bg-white hover:border-[#78a69d]"}`}
+                onClick={() => selectContextSource("mine")}
+                type="button"
+              >
+                <span className="flex items-start gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${contextSource === "mine" ? "bg-[#0b766d] text-white" : "bg-[#dcefeb] text-[#075d56]"}`}>
+                    {contextSource === "mine" ? <CheckIcon className="h-5 w-5" /> : <ScenarioIcon className="h-5 w-5" type="office" />}
+                  </span>
+                  <span>
+                    <span className="block font-extrabold text-[#0b2e2a]">Use my situation</span>
+                    <span className="mt-1 block text-sm leading-5 text-[#59706e]">Start with empty fields and add only what feels relevant.</span>
+                    {contextSource === "mine" ? <span className="mt-2 block text-xs font-extrabold uppercase tracking-[0.08em] text-[#075d56]">Selected</span> : null}
+                  </span>
+                </span>
+              </button>
+              <button
+                aria-pressed={contextSource === "sample"}
+                className={`min-h-28 rounded-2xl border p-4 text-left transition-colors ${contextSource === "sample" ? "border-[#b85f14] bg-[#fff7e8]" : "border-[#cfe0dc] bg-white hover:border-[#d6a462]"}`}
+                onClick={() => selectContextSource("sample")}
+                type="button"
+              >
+                <span className="flex items-start gap-3">
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${contextSource === "sample" ? "bg-[#b85f14] text-white" : "bg-[#ffe7c0] text-[#9a5011]"}`}>
+                    {contextSource === "sample" ? <CheckIcon className="h-5 w-5" /> : <SparkIcon className="h-5 w-5" />}
+                  </span>
+                  <span>
+                    <span className="block font-extrabold text-[#0b2e2a]">Try the sample</span>
+                    <span className="mt-1 block text-sm leading-5 text-[#59706e]">Load a first-year writing example for a faster demo.</span>
+                    {contextSource === "sample" ? <span className="mt-2 block text-xs font-extrabold uppercase tracking-[0.08em] text-[#9a5011]">Selected</span> : null}
+                  </span>
+                </span>
+              </button>
+            </div>
+          </fieldset>
+
           {Object.keys(errors).length > 0 ? (
             <div aria-labelledby="setup-error-title" className="mb-6 rounded-2xl border border-[#e7a6a0] bg-[#fff1ef] p-4" ref={errorRef} role="alert" tabIndex={-1}>
               <h2 className="font-extrabold text-[#8f1f17]" id="setup-error-title">Please complete the highlighted fields.</h2>
