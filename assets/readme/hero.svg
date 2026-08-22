@@ -40,13 +40,13 @@
     <circle cx="45" cy="42" r="12" fill="#0B766D"/>
     <path d="M40 42h10M45 37v10" stroke="#FFFFFF" stroke-linecap="round" stroke-width="2"/>
     <text x="68" y="39" fill="#0B2E2A" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="700">Office Hours</text>
-    <text x="68" y="58" fill="#6A7775" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">AI professor · safe practice</text>
+    <text x="68" y="58" fill="#6A7775" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">Practice Professor</text>
     <rect x="304" y="29" width="104" height="26" rx="13" fill="#DCEFEB"/>
     <text x="322" y="47" fill="#075D56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14" font-weight="750">EN / 简中</text>
 
     <rect x="22" y="88" width="318" height="58" rx="18" fill="#EEF7F3"/>
-    <text x="40" y="114" fill="#234A46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">What would you like to discuss</text>
-    <text x="40" y="136" fill="#234A46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">about your essay?</text>
+    <text x="40" y="114" fill="#234A46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">What would be most helpful for us</text>
+    <text x="40" y="136" fill="#234A46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">to focus on today?</text>
 
     <rect x="88" y="164" width="330" height="68" rx="18" fill="#0B766D"/>
     <text x="108" y="191" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">I want to understand the feedback</text>
