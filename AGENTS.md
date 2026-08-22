@@ -112,7 +112,7 @@ Do not provide authoritative legal, immigration, medical, mental-health, or univ
 
 - Next.js 16 App Router, React 19, TypeScript.
 - Tailwind CSS 4 with project tokens and component classes in `app/globals.css`.
-- A provider-neutral server-side AI boundary. `KimiProvider` is the planned first live adapter, using Kimi's OpenAI-compatible Chat Completions API and JSON Schema output.
+- A provider-neutral server-side AI boundary. `DemoProvider` is the deterministic default and fallback; `KimiProvider` is the first live adapter, using Kimi's OpenAI-compatible Chat Completions API and JSON Schema output.
 - Zod for request validation and structured feedback contracts.
 - Playwright for the Office Hours browser journey.
 - OpenNext, Wrangler, and Cloudflare Workers for hosting.
@@ -134,7 +134,7 @@ Key locations:
 
 - `app/` — pages and Route Handlers.
 - `components/practice/` — five-stage Office Hours experience.
-- `lib/ai/` — client, prompts, schemas, and deterministic demo output.
+- `lib/ai/` — providers, prompts, schemas, and deterministic demo output.
 - `types/` — shared contracts.
 - `tests/e2e/` — Playwright journey.
 - `design-system/campus-decoder/MASTER.md` — visual system.

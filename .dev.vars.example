@@ -1,1 +1,4 @@
 NEXTJS_ENV=development
+AI_PROVIDER=demo
+MOONSHOT_API_KEY=
+KIMI_MODEL=kimi-k3

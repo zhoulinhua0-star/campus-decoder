@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getOpenAIClient, OPENAI_MODEL } from "@/lib/ai/client";
-import { getMockProfessorReply } from "@/lib/ai/mock";
-import { buildContextPrompt, OFFICE_HOURS_ROLEPLAY_PROMPT } from "@/lib/ai/prompts";
+import { demoProvider, getAiProvider } from "@/lib/ai/providers";
 import { practiceRequestSchema } from "@/lib/ai/schemas";
 
 export async function POST(request: Request) {
@@ -11,33 +9,25 @@ export async function POST(request: Request) {
   }
 
   const { context, messages } = parsed.data;
-  const openai = getOpenAIClient();
+  const provider = getAiProvider();
 
-  if (!openai) {
+  if (provider.mode === "demo") {
     return NextResponse.json({
-      professorReply: getMockProfessorReply(messages),
+      professorReply: await provider.generateProfessorReply(context, messages),
       mode: "demo",
       notice: "Guided demo is active. Professor replies follow a short sample path until live AI is connected.",
     });
   }
 
   try {
-    const response = await openai.responses.create({
-      model: OPENAI_MODEL,
-      input: [
-        { role: "system", content: OFFICE_HOURS_ROLEPLAY_PROMPT },
-        { role: "user", content: buildContextPrompt(context) },
-        ...messages.map((message) => ({ role: message.role, content: message.content })),
-      ],
+    return NextResponse.json({
+      professorReply: await provider.generateProfessorReply(context, messages),
+      mode: "live",
+      notice: null,
     });
-
-    const professorReply = response.output_text.trim();
-    if (!professorReply) throw new Error("The model returned an empty response.");
-
-    return NextResponse.json({ professorReply, mode: "live", notice: null });
   } catch {
     return NextResponse.json({
-      professorReply: getMockProfessorReply(messages),
+      professorReply: await demoProvider.generateProfessorReply(context, messages),
       mode: "demo",
       notice: "Live AI was unavailable, so the guided demo continued safely.",
     });

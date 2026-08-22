@@ -18,7 +18,7 @@
   <code>Demo works without an API key</code>
 </p>
 
-> **Current status:** The complete Office Hours journey is live. Emailing a Professor and Group Project Conflict are visible previews. Production currently uses the clearly labeled deterministic demo path. Kimi is the selected future live-AI provider, but that integration has not been implemented yet.
+> **Current status:** The complete Office Hours journey is live. Emailing a Professor and Group Project Conflict are visible previews. Production currently uses the clearly labeled deterministic demo path. The Kimi adapter is implemented behind the provider boundary but remains disabled until a server-side API key is configured and evaluated.
 
 ## Try the working product
 
@@ -111,28 +111,26 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). The full demo works without external services or an API key.
 
-## Planned Kimi integration
+## Optional Kimi live mode
 
-Kimi will become the primary live provider because its OpenAI-compatible Chat Completions API supports JSON Schema output, which fits the existing Zod feedback contract. The provider migration is planned, not yet implemented.
+The server-side provider boundary exposes two implementations:
 
-The intended server-only configuration is:
+```text
+DemoProvider       # Default, deterministic, no external service
+KimiProvider       # Optional live mode with validated structured output
+```
+
+KimiProvider uses Kimi's OpenAI-compatible Chat Completions API and JSON Schema output, then validates every feedback response with the existing Zod contract.
+
+Enable it only after creating a Kimi project key and evaluating the model:
 
 ```dotenv
 AI_PROVIDER=kimi
 MOONSHOT_API_KEY=your_server_side_key
+KIMI_MODEL=kimi-k3
 ```
 
-The implementation should expose one internal provider contract with three adapters:
-
-```text
-DemoProvider       # Default, deterministic, no external service
-KimiProvider       # Planned primary live provider
-DeepSeekProvider   # Optional later provider, not part of the first migration
-```
-
-The migration must preserve the existing `/api/practice` and `/api/feedback` contracts, validate every structured response with Zod, and fall back to `DemoProvider` when live generation fails. API keys must remain in server-side runtime secrets and must never use a `NEXT_PUBLIC_*` variable.
-
-The current source still contains an unexercised OpenAI Responses API adapter. It should be replaced by the provider abstraction rather than extended as the production path.
+The `/api/practice` and `/api/feedback` contracts do not change between modes. Missing configuration, invalid structured output, empty responses, timeouts, and provider errors fall back to `DemoProvider`. API keys remain server-only and must never use a `NEXT_PUBLIC_*` variable.
 
 ## Verify changes
 
@@ -173,7 +171,7 @@ The manual workflow at `.github/workflows/deploy-cloudflare.yml` deploys `main` 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
 
-When the Kimi integration is implemented, store `MOONSHOT_API_KEY` as a Cloudflare Worker secret. The deploy command preserves existing runtime secrets. GitHub Pages is not supported because the application requires server-side Route Handlers.
+Before enabling Kimi, store `MOONSHOT_API_KEY` as a Cloudflare Worker secret and set `AI_PROVIDER=kimi` as a runtime variable. The deploy command preserves existing runtime secrets. GitHub Pages is not supported because the application requires server-side Route Handlers.
 
 ## Project map
 
@@ -187,7 +185,7 @@ app/
 components/
   practice/                 # Setup, context, practice, feedback, action
 lib/
-  ai/                       # Client, prompts, schemas, demo fallback
+  ai/                       # Providers, prompts, schemas, demo fallback
 tests/e2e/                  # Office Hours browser journey
 types/
   practice.ts               # Shared UI and API contracts
@@ -197,8 +195,7 @@ open-next.config.ts         # OpenNext adapter configuration
 
 ## Current limits
 
-- Kimi integration and the provider abstraction are not implemented yet.
-- The current unexercised OpenAI adapter remains in the source until that migration.
+- Kimi live mode is implemented but has not been evaluated with a funded API key or enabled in production.
 - Campus Context is currently general guidance rather than AI-personalized interpretation.
 - Emailing a Professor and Group Project Conflict are not implemented flows.
 - There is no authentication, saved history, database, analytics, or voice role-play.
@@ -207,11 +204,10 @@ open-next.config.ts         # OpenNext adapter configuration
 ## Next
 
 1. Validate the Office Hours narrative with Chinese and other international students new to U.S. university culture.
-2. Replace the current single-provider client with `DemoProvider` and `KimiProvider`, keeping DeepSeek as a later option.
-3. Test Kimi professor turns, bilingual coaching, schema reliability, latency, and safe fallback behavior.
-4. Personalize Campus Context using the student's situation and optional professor feedback.
-5. Complete accessibility and cross-device QA, then capture screenshots and record the hackathon demo.
-6. Implement Emailing a Professor only after the primary journey is validated.
+2. Test Kimi professor turns, bilingual coaching, schema reliability, latency, and safe fallback behavior before enabling the production secret.
+3. Personalize Campus Context using the student's situation and optional professor feedback.
+4. Complete accessibility and cross-device QA, then capture screenshots and record the hackathon demo.
+5. Implement Emailing a Professor only after the primary journey is validated.
 
 ## Safety
 
