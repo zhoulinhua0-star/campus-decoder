@@ -83,6 +83,7 @@ The application must remain usable without any live-provider API key. `DemoProvi
 - Demo feedback may quote only text the user actually submitted.
 - Demo output must not imply that fixed content is AI-personalized analysis.
 - Live-AI failures should fall back safely rather than strand the user mid-session.
+- Chinese speech-to-text may use the browser's speech-recognition capability. Natural-English conversion must use the server-side provider boundary; if live AI is unavailable, preserve the Chinese draft and explain that conversion is unavailable rather than fabricating a translation.
 
 ## Scope and safety
 
@@ -121,6 +122,7 @@ Primary boundaries:
 
 - `POST /api/practice` generates the next professor turn.
 - `POST /api/feedback` generates the completed-session report and action plan.
+- `POST /api/translate` converts a user-reviewed Chinese practice draft into natural spoken English before it is sent to the simulated professor.
 - Select the runtime through `AI_PROVIDER`; the first supported modes should be `demo` and `kimi`.
 - Keep `MOONSHOT_API_KEY` and all future provider credentials server-only. Never expose them through `NEXT_PUBLIC_*` or call a model provider from client components.
 - Preserve one internal provider contract so routes, shared types, and UI components do not depend on a vendor SDK.

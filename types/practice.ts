@@ -20,6 +20,11 @@ export type PracticeApiResponse = {
   notice: string | null;
 };
 
+export type TranslationApiResponse = {
+  translation: string;
+  mode: "live";
+};
+
 export type Dimension = "Clarity" | "Tone" | "Specificity" | "Initiative" | "Campus fit";
 
 export type FeedbackReport = {

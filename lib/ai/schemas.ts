@@ -32,6 +32,16 @@ export const feedbackRequestSchema = z.object({
   path: ["messages"],
 });
 
+export const translationRequestSchema = z.object({
+  text: z.string().trim().min(1).max(2000).refine((text) => /[\u3400-\u9fff]/u.test(text), {
+    message: "The draft must include Chinese text.",
+  }),
+});
+
+export const naturalEnglishSchema = z.string().trim().min(1).max(2000).refine((text) => !/[\u3400-\u9fff]/u.test(text), {
+  message: "The translation must be English only.",
+});
+
 const improvementSchema = z.object({
   dimension: z.enum(["Clarity", "Tone", "Specificity", "Initiative", "Campus fit"]),
   observation: z.string().trim().min(1).max(500),

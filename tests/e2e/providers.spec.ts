@@ -57,16 +57,26 @@ test("KimiProvider sends Chat Completions requests and validates feedback", asyn
   const { client, requests } = createFakeClient([
     "Let's look at the thesis comment first. What part feels unclear?",
     JSON.stringify(expectedReport),
+    "Could we look at the feedback on my thesis together?",
   ]);
   const provider = new KimiProvider(client);
 
   await expect(provider.generateProfessorReply(context, messages)).resolves.toContain("thesis comment");
   await expect(provider.generateFeedback(context, messages)).resolves.toEqual(expectedReport);
+  await expect(provider.translateToNaturalEnglish("我们可以一起看看关于我论文论点的反馈吗？")).resolves.toBe("Could we look at the feedback on my thesis together?");
   expect(requests[0]).toMatchObject({ model: "kimi-k3", reasoning_effort: "low" });
   expect(requests[1]).toMatchObject({
     model: "kimi-k3",
     reasoning_effort: "low",
     response_format: { type: "json_schema", json_schema: { strict: true } },
+  });
+  expect(requests[2]).toMatchObject({
+    model: "kimi-k3",
+    reasoning_effort: "low",
+    messages: [
+      { role: "system", content: expect.stringContaining("natural spoken English") },
+      { role: "user", content: expect.stringContaining("我们可以一起看看") },
+    ],
   });
 });
 
@@ -74,4 +84,10 @@ test("KimiProvider rejects invalid structured feedback so routes can fall back",
   const { client } = createFakeClient(["not valid JSON"]);
   const provider = new KimiProvider(client);
   await expect(provider.generateFeedback(context, messages)).rejects.toThrow();
+});
+
+test("KimiProvider rejects a conversion that still contains Chinese", async () => {
+  const { client } = createFakeClient(["我们可以一起看看 feedback 吗？"]);
+  const provider = new KimiProvider(client);
+  await expect(provider.translateToNaturalEnglish("我们可以一起看看反馈吗？")).rejects.toThrow();
 });

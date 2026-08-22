@@ -1,14 +1,15 @@
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { getMockFeedback, getMockProfessorReply } from "@/lib/ai/mock";
-import { buildContextPrompt, buildFeedbackInput, OFFICE_HOURS_FEEDBACK_PROMPT, OFFICE_HOURS_ROLEPLAY_PROMPT } from "@/lib/ai/prompts";
-import { feedbackReportSchema } from "@/lib/ai/schemas";
+import { buildContextPrompt, buildFeedbackInput, NATURAL_ENGLISH_TRANSLATION_PROMPT, OFFICE_HOURS_FEEDBACK_PROMPT, OFFICE_HOURS_ROLEPLAY_PROMPT } from "@/lib/ai/prompts";
+import { feedbackReportSchema, naturalEnglishSchema } from "@/lib/ai/schemas";
 import type { FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
 
 export interface AiProvider {
   mode: "demo" | "live";
   generateProfessorReply(context: PracticeContext, messages: PracticeMessage[]): Promise<string>;
   generateFeedback(context: PracticeContext, messages: PracticeMessage[]): Promise<FeedbackReport>;
+  translateToNaturalEnglish(text: string): Promise<string>;
 }
 
 export class DemoProvider implements AiProvider {
@@ -20,6 +21,11 @@ export class DemoProvider implements AiProvider {
 
   async generateFeedback(context: PracticeContext, messages: PracticeMessage[]) {
     return getMockFeedback(context, messages);
+  }
+
+  async translateToNaturalEnglish(text: string): Promise<string> {
+    void text;
+    throw new Error("Natural-English conversion requires a live AI provider.");
   }
 }
 
@@ -66,6 +72,23 @@ export class KimiProvider implements AiProvider {
     const content = completion.choices[0]?.message.content?.trim();
     if (!content) throw new Error("Kimi returned empty feedback.");
     return feedbackReportSchema.parse(JSON.parse(content));
+  }
+
+  async translateToNaturalEnglish(text: string) {
+    const completion = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: NATURAL_ENGLISH_TRANSLATION_PROMPT },
+        { role: "user", content: `<student_draft>${text}</student_draft>` },
+      ],
+      ...(this.model === "kimi-k3" ? { reasoning_effort: "low" as const } : {}),
+    });
+
+    if (completion.choices[0]?.finish_reason === "length") {
+      throw new Error("Kimi truncated the English rewrite.");
+    }
+
+    return naturalEnglishSchema.parse(completion.choices[0]?.message.content);
   }
 }
 

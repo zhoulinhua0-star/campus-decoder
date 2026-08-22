@@ -30,6 +30,10 @@ export function MessageIcon(props: IconProps) {
   return <IconBase {...props}><path d="M5 6.5A2.5 2.5 0 0 1 7.5 4h9A2.5 2.5 0 0 1 19 6.5v6a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4A2.5 2.5 0 0 1 4 12.5v-6Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.6" /></IconBase>;
 }
 
+export function MicrophoneIcon(props: IconProps) {
+  return <IconBase {...props}><rect height="11" rx="4" stroke="currentColor" strokeWidth="1.8" width="7" x="8.5" y="3" /><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3m-3 0h6" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></IconBase>;
+}
+
 export function SparkIcon(props: IconProps) {
   return <IconBase {...props}><path d="M12 3c.45 4.6 2.4 6.55 7 7-4.6.45-6.55 2.4-7 7-.45-4.6-2.4-6.55-7-7 4.6-.45 6.55-2.4 7-7Z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.6" /><path d="M19 16c.2 2 1 2.8 3 3-2 .2-2.8 1-3 3-.2-2-1-2.8-3-3 2-.2 2.8-1 3-3Z" fill="currentColor" /></IconBase>;
 }
