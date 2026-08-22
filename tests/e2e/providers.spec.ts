@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import type OpenAI from "openai";
+import { DEMO_OPENING } from "@/lib/ai/constants";
 import { getMockFeedback } from "@/lib/ai/mock";
 import { DemoProvider, getAiProvider, KimiProvider } from "@/lib/ai/providers";
 import type { PracticeContext, PracticeMessage } from "@/types/practice";
@@ -50,6 +51,29 @@ test("uses DemoProvider when Kimi is not fully configured", () => {
     if (previousKey === undefined) delete process.env.MOONSHOT_API_KEY;
     else process.env.MOONSHOT_API_KEY = previousKey;
   }
+});
+
+test("DemoProvider uses the honest general opening before the student speaks", async () => {
+  const provider = new DemoProvider();
+  await expect(provider.generateProfessorReply(context, [])).resolves.toBe(DEMO_OPENING);
+});
+
+test("KimiProvider receives private context when generating the opening", async () => {
+  const { client, requests } = createFakeClient(["Welcome. What would you like to focus on in our meeting today?"]);
+  const provider = new KimiProvider(client);
+
+  await expect(provider.generateProfessorReply(context, [])).resolves.toContain("What would you like to focus on");
+  expect(requests[0]).toMatchObject({
+    messages: [
+      { role: "system", content: expect.stringContaining("When there are no conversation turns yet") },
+      { role: "user", content: expect.stringContaining("Student goal: Understand the feedback") },
+    ],
+  });
+  expect(requests[0]).toMatchObject({
+    messages: expect.arrayContaining([
+      { role: "user", content: expect.stringContaining("private simulation context, not a student utterance") },
+    ]),
+  });
 });
 
 test("KimiProvider sends Chat Completions requests and validates feedback", async () => {

@@ -18,9 +18,9 @@ export const practiceMessageSchema = z.object({
 
 export const practiceRequestSchema = z.object({
   context: practiceContextSchema,
-  messages: z.array(practiceMessageSchema).min(2).max(20),
-}).refine(({ messages }) => messages.some((message) => message.role === "user"), {
-  message: "At least one student response is required.",
+  messages: z.array(practiceMessageSchema).max(20),
+}).refine(({ messages }) => messages.length === 0 || messages.some((message) => message.role === "user"), {
+  message: "A continued conversation must include at least one student response.",
   path: ["messages"],
 });
 

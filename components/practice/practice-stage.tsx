@@ -276,7 +276,7 @@ export function PracticeStage({ context, messages, isSending, isFinishing, notic
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e4eeeb] px-5 py-4 sm:px-7">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dcefeb] text-[#075d56]"><MessageIcon className="h-5 w-5" /></span>
-              <div><h1 className="text-sm font-extrabold text-[#0b2e2a]">Professor Chen</h1><p className="text-xs font-semibold text-[#6a7775]">First-Year Writing · Office hours</p></div>
+              <div className="min-w-0"><h1 className="text-sm font-extrabold text-[#0b2e2a]">Practice Professor</h1><p className="text-xs font-semibold text-[#6a7775]">{context.course} · Office hours</p></div>
             </div>
             <span className="flex items-center gap-2 rounded-full bg-[#eef7f3] px-3 py-1.5 text-xs font-extrabold text-[#075d56]"><span className="h-2 w-2 rounded-full bg-[#23a094]" /> Practice room</span>
           </div>
@@ -286,7 +286,7 @@ export function PracticeStage({ context, messages, isSending, isFinishing, notic
           <div aria-live="polite" className="flex-1 space-y-5 overflow-y-auto bg-[#fcfdfc] px-4 py-6 sm:px-7 sm:py-8">
             {messages.map((message, index) => (
               <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`} key={`${message.role}-${index}`}>
-                {message.role === "assistant" ? <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dcefeb] text-xs font-extrabold text-[#075d56]">PC</span> : null}
+                {message.role === "assistant" ? <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#dcefeb] text-xs font-extrabold text-[#075d56]">PP</span> : null}
                 <div className={`max-w-[84%] px-4 py-3 text-sm leading-7 sm:max-w-[72%] ${message.role === "user" ? "rounded-[18px_18px_5px_18px] bg-[#0b766d] text-white" : "rounded-[18px_18px_18px_5px] border border-[#dbe8e4] bg-white text-[#234a46]"}`}>
                   {message.content}
                 </div>
@@ -294,8 +294,8 @@ export function PracticeStage({ context, messages, isSending, isFinishing, notic
             ))}
             {isSending ? (
               <div className="flex items-center gap-3">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#dcefeb] text-xs font-extrabold text-[#075d56]">PC</span>
-                <span className="flex h-11 items-center gap-1 rounded-[18px_18px_18px_5px] border border-[#dbe8e4] bg-white px-4" aria-label="Professor is typing">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#dcefeb] text-xs font-extrabold text-[#075d56]">PP</span>
+                <span className="flex h-11 items-center gap-1 rounded-[18px_18px_18px_5px] border border-[#dbe8e4] bg-white px-4" aria-label="Practice professor is typing">
                   {[0, 1, 2].map((dot) => <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#7ca39c]" key={dot} style={{ animationDelay: `${dot * 150}ms` }} />)}
                 </span>
               </div>

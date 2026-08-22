@@ -120,7 +120,7 @@ Do not provide authoritative legal, immigration, medical, mental-health, or univ
 
 Primary boundaries:
 
-- `POST /api/practice` generates the next professor turn.
+- `POST /api/practice` generates the context-aware opening or next professor turn.
 - `POST /api/feedback` generates the completed-session report and action plan.
 - `POST /api/translate` converts a user-reviewed Chinese practice draft into natural spoken English before it is sent to the simulated professor.
 - Select the runtime through `AI_PROVIDER`; the first supported modes should be `demo` and `kimi`.

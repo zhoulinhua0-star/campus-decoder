@@ -25,6 +25,9 @@ test("completes the honest Office Hours demo flow", async ({ page }) => {
   await page.getByRole("button", { name: "Start the role-play" }).click();
 
   await expect(page.getByText("Step 3 of 5")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Practice Professor" })).toBeVisible();
+  await expect(page.getByText("First-Year Writing Seminar · Office hours")).toBeVisible();
+  await expect(page.getByText("Hi, come in. What would be most helpful for us to focus on today?")).toBeVisible();
   await page.getByLabel("Your response to the professor").fill(studentResponse);
   await page.getByLabel("Your response to the professor").press("Enter");
 
@@ -133,4 +136,34 @@ test("dictates in Mandarin and converts the editable draft to natural English", 
   await expect(page.getByText("Converted to natural English. Review and edit it before sending.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Restore Chinese draft" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Send response" })).toBeEnabled();
+});
+
+test("requests a context-aware opening before the student speaks", async ({ page }) => {
+  let openingRequest: unknown;
+  await page.route("**/api/practice", async (route) => {
+    openingRequest = route.request().postDataJSON();
+    await route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        professorReply: "Welcome. What would you like to understand about the feedback in First-Year Writing Seminar?",
+        mode: "live",
+        notice: null,
+      }),
+    });
+  });
+
+  await page.goto("/practice/office-hours");
+  await page.getByRole("button", { name: /Try the sample/ }).click();
+  await page.getByRole("button", { name: "See Office Hours guidance" }).click();
+  await page.getByRole("button", { name: "Start the role-play" }).click();
+
+  await expect(page.getByText("Welcome. What would you like to understand about the feedback in First-Year Writing Seminar?")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Practice Professor" })).toBeVisible();
+  expect(openingRequest).toMatchObject({
+    context: {
+      course: "First-Year Writing Seminar",
+      goal: "Understand the feedback and improve my next essay",
+    },
+    messages: [],
+  });
 });

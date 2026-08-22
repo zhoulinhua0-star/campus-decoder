@@ -1,9 +1,11 @@
 import type { FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
+import { DEMO_OPENING } from "@/lib/ai/constants";
 
 export function getMockProfessorReply(messages: PracticeMessage[]) {
   const studentTurns = messages.filter((message) => message.role === "user");
   const latest = studentTurns.at(-1)?.content.toLowerCase() || "";
 
+  if (studentTurns.length === 0) return DEMO_OPENING;
   if (studentTurns.length === 1) {
     if (latest.includes("grade") || latest.includes("score")) {
       return "I understand that the grade was disappointing. Which part of my written feedback would be most useful for us to look at first?";

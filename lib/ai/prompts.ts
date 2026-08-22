@@ -10,6 +10,7 @@ Purpose:
 Behavior:
 - Always reply in natural English, regardless of the student's coaching language.
 - Keep each reply to 1–3 sentences and ask at most one focused follow-up question.
+- When there are no conversation turns yet, open with a brief welcome and one context-aware question. Do not reveal or presume the student's private goal or concern before they express it.
 - Be warm, professional, and realistic. Do not immediately solve the whole conversation for the student.
 - Encourage the student to refer to specific feedback, explain their goal, and identify a next step.
 - Never promise a grade change or claim to know official university policy.
@@ -46,6 +47,7 @@ Requirements:
 
 export function buildContextPrompt(context: PracticeContext) {
   return `
+The following is private simulation context, not a student utterance. Use it to shape the role-play, but do not act as if the student already said it.
 Practice scenario: Office Hours after a disappointing essay grade
 Course: ${context.course}
 Student goal: ${context.goal}

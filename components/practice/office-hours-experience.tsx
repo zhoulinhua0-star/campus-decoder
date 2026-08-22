@@ -7,6 +7,7 @@ import { FeedbackStage } from "@/components/practice/feedback-stage";
 import { PracticeStage } from "@/components/practice/practice-stage";
 import { PracticeStage as Stage, ProgressSteps } from "@/components/practice/progress-steps";
 import { SetupStage } from "@/components/practice/setup-stage";
+import { DEMO_OPENING } from "@/lib/ai/constants";
 import type { FeedbackApiResponse, FeedbackReport, PracticeApiResponse, PracticeContext, PracticeMessage } from "@/types/practice";
 
 const emptyContext: PracticeContext = {
@@ -27,13 +28,11 @@ const sampleContext: PracticeContext = {
   preferredLanguage: "English",
 };
 
-const initialMessages: PracticeMessage[] = [{ role: "assistant", content: "Hi, come in. What would you like to discuss about your essay?" }];
-
 export function OfficeHoursExperience() {
   const [stage, setStage] = useState<Stage>("Setup");
   const [context, setContext] = useState(emptyContext);
   const [contextSource, setContextSource] = useState<"mine" | "sample">("mine");
-  const [messages, setMessages] = useState(initialMessages);
+  const [messages, setMessages] = useState<PracticeMessage[]>([]);
   const [report, setReport] = useState<FeedbackReport | null>(null);
   const [feedbackMode, setFeedbackMode] = useState<"live" | "demo" | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -46,6 +45,38 @@ export function OfficeHoursExperience() {
     if (source === contextSource) return;
     setContextSource(source);
     setContext(source === "sample" ? sampleContext : emptyContext);
+    setMessages([]);
+    setNotice(null);
+  }
+
+  function updateContext(nextContext: PracticeContext) {
+    setContext(nextContext);
+    setMessages([]);
+    setNotice(null);
+  }
+
+  async function beginPractice() {
+    setStage("Practice");
+    if (messages.length > 0) return;
+
+    setIsSending(true);
+    setNotice(null);
+    try {
+      const response = await fetch("/api/practice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context, messages: [] }),
+      });
+      if (!response.ok) throw new Error("Opening request failed");
+      const data = (await response.json()) as PracticeApiResponse;
+      setMessages([{ role: "assistant", content: data.professorReply }]);
+      setNotice(data.notice);
+    } catch {
+      setMessages([{ role: "assistant", content: DEMO_OPENING }]);
+      setNotice("A personalized opening could not load, so the general practice opening is shown.");
+    } finally {
+      setIsSending(false);
+    }
   }
 
   async function sendMessage(content: string) {
@@ -93,7 +124,7 @@ export function OfficeHoursExperience() {
   }
 
   function restart() {
-    setMessages(initialMessages);
+    setMessages([]);
     setReport(null);
     setFeedbackMode(null);
     setNotice(null);
@@ -103,8 +134,8 @@ export function OfficeHoursExperience() {
   return (
     <>
       <ProgressSteps current={stage} />
-      {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={setContext} onContinue={() => setStage("Context")} onSelectContextSource={selectContextSource} /> : null}
-      {stage === "Context" ? <ContextStage context={context} onBack={() => setStage("Setup")} onContinue={() => setStage("Practice")} /> : null}
+      {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={() => setStage("Context")} onSelectContextSource={selectContextSource} /> : null}
+      {stage === "Context" ? <ContextStage context={context} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}
       {stage === "Practice" ? <PracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}
       {stage === "Feedback" && report && feedbackMode ? <FeedbackStage language={context.preferredLanguage} mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
       {stage === "Action" && report && feedbackMode ? <ActionStage language={context.preferredLanguage} mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}

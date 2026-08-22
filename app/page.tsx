@@ -43,13 +43,13 @@ export default function Home() {
               <div className="flex items-center justify-between border-b border-[#e4eeeb] pb-5">
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dcefeb] text-[#075d56]"><MessageIcon className="h-5 w-5" /></span>
-                  <div><p className="text-sm font-extrabold text-[#0b2e2a]">Professor Chen</p><p className="text-xs font-semibold text-[#6a7775]">Office hours · Practice</p></div>
+                  <div><p className="text-sm font-extrabold text-[#0b2e2a]">Practice Professor</p><p className="text-xs font-semibold text-[#6a7775]">Office hours · Practice</p></div>
                 </div>
                 <span className="rounded-full bg-[#eef7f3] px-3 py-1 text-xs font-extrabold text-[#075d56]">Safe to try</span>
               </div>
               <div className="space-y-5 py-7">
                 <div className="max-w-[84%] rounded-[18px_18px_18px_5px] bg-[#eef7f3] px-4 py-3 text-sm leading-6 text-[#234a46]">
-                  Hi, come in. What would you like to discuss about your essay?
+                  Hi, come in. What would be most helpful for us to focus on today?
                 </div>
                 <div className="ml-auto max-w-[88%] rounded-[18px_18px_5px_18px] bg-[#0b766d] px-4 py-3 text-sm leading-6 text-white">
                   I&apos;d like to understand your feedback on my thesis and learn how I can improve it.
