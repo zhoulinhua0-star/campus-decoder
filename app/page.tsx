@@ -12,7 +12,7 @@ const steps = [
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#fbfdfb]">
+    <main className="min-h-screen overflow-hidden bg-[#fbfdfb]" id="main-content" tabIndex={-1}>
       <SiteHeader />
 
       <section className="relative border-b border-[#dbe8e4] py-18 sm:py-24 lg:py-28">

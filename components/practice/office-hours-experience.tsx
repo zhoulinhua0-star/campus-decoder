@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActionStage } from "@/components/practice/action-stage";
 import { ContextStage } from "@/components/practice/context-stage";
 import { FeedbackStage } from "@/components/practice/feedback-stage";
@@ -48,6 +48,7 @@ function getGeneralContextGuidance(context: PracticeContext): ContextGuidance {
 
 export function OfficeHoursExperience() {
   const [stage, setStage] = useState<Stage>("Setup");
+  const previousStageRef = useRef<Stage>(stage);
   const [context, setContext] = useState(emptyContext);
   const [contextSource, setContextSource] = useState<"mine" | "sample">("mine");
   const [messages, setMessages] = useState<PracticeMessage[]>([]);
@@ -61,7 +62,13 @@ export function OfficeHoursExperience() {
   const [isFinishing, setIsFinishing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [stage]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (previousStageRef.current !== stage) {
+      requestAnimationFrame(() => document.querySelector<HTMLElement>("#office-hours-stage h1")?.focus({ preventScroll: true }));
+    }
+    previousStageRef.current = stage;
+  }, [stage]);
 
   function selectContextSource(source: "mine" | "sample") {
     if (source === contextSource) return;
@@ -191,11 +198,13 @@ export function OfficeHoursExperience() {
   return (
     <>
       <ProgressSteps current={stage} />
-      {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={decodeContext} onSelectContextSource={selectContextSource} /> : null}
-      {stage === "Context" ? <ContextStage context={context} guidance={contextGuidance} isLoading={isDecoding} mode={contextMode} notice={contextNotice} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}
-      {stage === "Practice" ? <PracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}
-      {stage === "Feedback" && report && feedbackMode ? <FeedbackStage language={context.preferredLanguage} mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
-      {stage === "Action" && report && feedbackMode ? <ActionStage language={context.preferredLanguage} mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}
+      <div id="office-hours-stage">
+        {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={decodeContext} onSelectContextSource={selectContextSource} /> : null}
+        {stage === "Context" ? <ContextStage context={context} guidance={contextGuidance} isLoading={isDecoding} mode={contextMode} notice={contextNotice} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}
+        {stage === "Practice" ? <PracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}
+        {stage === "Feedback" && report && feedbackMode ? <FeedbackStage language={context.preferredLanguage} mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
+        {stage === "Action" && report && feedbackMode ? <ActionStage language={context.preferredLanguage} mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}
+      </div>
     </>
   );
 }

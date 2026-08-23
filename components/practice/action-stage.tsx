@@ -31,7 +31,7 @@ export function ActionStage({ report, language, mode, onBack, onRestart }: { rep
       <div className="mx-auto max-w-[980px]">
         <div className="text-center">
           <span className="eyebrow">{demo ? (chinese ? "Demo 行动计划" : "Representative demo action plan") : (chinese ? "从练习到行动" : "From practice to action")}</span>
-          <h1 className="font-display mx-auto mt-5 max-w-[760px] text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">{demo ? (chinese ? "修改这份示例，让它符合你的真实情况。" : "Adapt this sample outline to your real situation.") : (chinese ? "把这份提纲带进真正的 Office Hours。" : "Take this outline into the real office hour.")}</h1>
+          <h1 className="font-display mx-auto mt-5 max-w-[760px] text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl" tabIndex={-1}>{demo ? (chinese ? "修改这份示例，让它符合你的真实情况。" : "Adapt this sample outline to your real situation.") : (chinese ? "把这份提纲带进真正的 Office Hours。" : "Take this outline into the real office hour.")}</h1>
           <p className="mx-auto mt-5 max-w-[680px] text-lg leading-8 text-[#59706e]">{demo ? (chinese ? "其中的目标来自你的设置，但具体建议仍是代表性示例；连接 Live AI 后才会进行个性化分析。" : "The goal comes from your setup, but the coaching remains representative until live AI is connected.") : (chinese ? "这是一个起点，不是必须照读的脚本。请修改成符合你表达方式的版本。" : "This is a starting point, not a script you must follow. Edit it until it sounds like you.")}</p>
         </div>
 

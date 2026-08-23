@@ -14,7 +14,7 @@ export function ScenarioCard({ title, description, outcome, type, active = false
     <>
       <div className="flex items-start justify-between gap-4">
         <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#dcefeb] text-[#075d56]"><ScenarioIcon className="h-6 w-6" type={type} /></span>
-        <span className={`rounded-full px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] ${active ? "bg-[#dcefeb] text-[#075d56]" : "bg-[#f3f4f3] text-[#6a7775]"}`}>{active ? "Ready" : "Coming next"}</span>
+        <span className={`rounded-full px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.1em] ${active ? "bg-[#dcefeb] text-[#075d56]" : "bg-[#f3f4f3] text-[#536461]"}`}>{active ? "Ready" : "Coming next"}</span>
       </div>
       <div>
         <h3 className="font-display mt-6 text-2xl font-bold text-[#0b2e2a]">{title}</h3>
@@ -32,5 +32,5 @@ export function ScenarioCard({ title, description, outcome, type, active = false
   );
 
   const classes = "card flex min-h-[390px] flex-col p-6 text-left no-underline transition duration-200";
-  return active ? <Link className={`${classes} hover:-translate-y-1 hover:border-[#78a69d] hover:shadow-[0_22px_50px_rgba(11,46,42,0.1)]`} href="/practice/office-hours">{content}</Link> : <article className={`${classes} opacity-75`}>{content}</article>;
+  return active ? <Link className={`${classes} hover:-translate-y-1 hover:border-[#78a69d] hover:shadow-[0_22px_50px_rgba(11,46,42,0.1)]`} href="/practice/office-hours">{content}</Link> : <article className={classes}>{content}</article>;
 }

@@ -47,7 +47,7 @@ export function SetupStage({ context, contextSource, onChange, onContinue, onSel
       <div className="grid gap-8 lg:grid-cols-[.7fr_1.3fr] lg:gap-16">
         <div>
           <span className="eyebrow">A little context first</span>
-          <h1 className="font-display mt-5 text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">Make the practice feel like your situation.</h1>
+          <h1 className="font-display mt-5 text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl" tabIndex={-1}>Make the practice feel like your situation.</h1>
           <p className="mt-5 text-lg leading-8 text-[#59706e]">You do not need to tell us everything. A clear goal and a few details are enough to shape the professor&apos;s responses.</p>
           <div className="mt-8 rounded-3xl border border-[#cfe0dc] bg-[#eef7f3] p-5">
             <p className="text-sm font-extrabold text-[#0b2e2a]">What happens next</p>
@@ -122,11 +122,11 @@ export function SetupStage({ context, contextSource, onChange, onContinue, onSel
               {errors.whatHappened ? <p className="field-error" id="happened-error">{errors.whatHappened}</p> : null}
             </div>
             <div>
-              <label className="field-label" htmlFor="concern">What worries you most? <span className="font-normal text-[#788784]">Optional</span></label>
+              <label className="field-label" htmlFor="concern">What worries you most? <span className="font-normal text-[#536461]">Optional</span></label>
               <textarea className="text-area !min-h-24" id="concern" maxLength={500} onChange={(event) => update("concern", event.target.value)} value={context.concern} />
             </div>
             <div>
-              <label className="field-label" htmlFor="feedback">Professor feedback <span className="font-normal text-[#788784]">Optional</span></label>
+              <label className="field-label" htmlFor="feedback">Professor feedback <span className="font-normal text-[#536461]">Optional</span></label>
               <textarea className="text-area !min-h-24" id="feedback" maxLength={2000} onChange={(event) => update("professorFeedback", event.target.value)} value={context.professorFeedback} />
             </div>
           </div>

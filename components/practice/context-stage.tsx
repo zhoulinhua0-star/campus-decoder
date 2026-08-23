@@ -45,7 +45,7 @@ export function ContextStage({ context, guidance, isLoading, mode, notice, onBac
       <div className="mx-auto max-w-[960px]">
         <div className="text-center">
           <span className="eyebrow">{chinese ? "解读你的情况" : "Decode your situation"}</span>
-          <h1 className="font-display mx-auto mt-5 max-w-[760px] text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">{chinese ? "先分清我们知道什么，以及还不知道什么。" : "Separate what we know from what we still need to ask."}</h1>
+          <h1 className="font-display mx-auto mt-5 max-w-[760px] text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl" tabIndex={-1}>{chinese ? "先分清我们知道什么，以及还不知道什么。" : "Separate what we know from what we still need to ask."}</h1>
           <p className="mx-auto mt-5 max-w-[720px] text-lg leading-8 text-[#59706e]">{chinese ? "下面的解读会使用你提供的信息，但不会声称知道教授没有说出的想法。" : "This decode uses the details you provided without claiming to know what your professor privately intended."}</p>
         </div>
 
@@ -77,7 +77,7 @@ export function ContextStage({ context, guidance, isLoading, mode, notice, onBac
 
         {!isLoading && guidance ? <div className="mt-8 rounded-3xl bg-[#0b2e2a] p-6 text-white sm:flex sm:items-center sm:justify-between sm:gap-8">
           <div className="min-w-0"><p className="text-xs font-extrabold uppercase tracking-[0.1em] text-[#8ed1c8]">{chinese ? "你的练习目标" : "Your practice goal"}</p><p className="mt-2 max-w-[650px] font-semibold leading-7 [overflow-wrap:anywhere]">{context.goal}</p></div>
-          <div className="mt-4 flex min-w-0 shrink-0 flex-col items-start gap-2 sm:mt-0 sm:items-end"><span className="inline-flex max-w-full rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-[#d6e9e5] [overflow-wrap:anywhere]">{context.course}</span>{mode ? <span className="text-xs font-bold text-[#8ed1c8]">{mode === "live" ? (chinese ? "实时 AI 解读" : "Live AI decode") : (chinese ? "Grounded Demo 解读" : "Grounded Demo decode")}</span> : null}</div>
+          <div className="mt-4 flex min-w-0 flex-col items-start gap-2 sm:mt-0 sm:max-w-[40%] sm:items-end"><span className="block max-w-full rounded-3xl bg-white/10 px-4 py-2 text-sm font-bold text-[#d6e9e5] [overflow-wrap:anywhere]">{context.course}</span>{mode ? <span className="text-xs font-bold text-[#8ed1c8]">{mode === "live" ? (chinese ? "实时 AI 解读" : "Live AI decode") : (chinese ? "Grounded Demo 解读" : "Grounded Demo decode")}</span> : null}</div>
         </div> : null}
 
         <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">

@@ -18,20 +18,28 @@
   <code>Works without an API key</code>
 </p>
 
-> **Live now:** one complete Office Hours journey, including personal or sample setup, campus-context coaching, typed or bilingual voice input, structured feedback, and an editable meeting outline. Production intentionally uses the clearly labeled deterministic Demo provider. The Kimi adapter is implemented but is not funded, configured, or enabled.
+> **Live now:** one complete, deployed Office Hours journey with grounded campus-context coaching, typed or bilingual voice input, structured feedback, and an editable meeting outline. The current release includes the responsive and accessibility fixes described below. Production intentionally uses the clearly labeled deterministic Demo provider; Kimi is implemented but not enabled.
 
 ## Try the product
 
 Open **[Campus Decoder](https://campus-decoder.zhoulinhua0.workers.dev)**, choose **Practice Office Hours**, and complete one conversation:
 
 1. Choose **Use my situation** for an empty form or **Try the sample** for the judge demo.
-2. Add the course, what happened, your concern, and what you want from the meeting.
-3. Review a grounded decode of the literal source, likely campus context, uncertainty, and one constructive next move.
-4. Reply in English by typing or speaking. Press `Enter` to send and `Shift` + `Enter` for a new line.
-5. If you dictate in Mandarin, review the transcript and use the explicit **Convert to natural English** step before sending.
-6. Finish with transcript-grounded feedback and an editable meeting outline.
+2. Review the grounded Context guidance, then practice your own English response by typing or speaking.
+3. Finish with transcript-grounded feedback and an editable meeting outline. Mandarin dictation stays editable and requires an explicit natural-English conversion before sending.
 
 The professor is presented honestly as **Practice Professor**, paired with the course the student entered. The opening turn is requested with the full situation context, while avoiding claims that the student has already shared private concerns aloud.
+
+## Verified demo baseline
+
+| Proof | Current result |
+| --- | --- |
+| Production | Homepage, Office Hours journey, and grounded Context API verified on Cloudflare Workers |
+| Automated regression | **31 passing checks**, 12 intentional project-specific skips, 0 failures |
+| Responsive coverage | 375px portrait, mobile landscape, 768px tablet, and 1440px desktop |
+| Browser engines | Chromium plus desktop WebKit as a Safari-engine approximation |
+| Accessibility | Five-stage axe WCAG 2 A/AA scan, skip navigation, keyboard focus, 44px targets, and reduced-motion checks |
+| Resilience | Long unbroken content plus English/Mandarin speech mocks, permission denial, missing device, restart, and dictation length limit |
 
 ## Why Campus Decoder exists
 
@@ -106,7 +114,7 @@ flowchart LR
 | AI boundary | `DemoProvider` and optional `KimiProvider` behind one server-side contract |
 | Validation | Zod request, context, translation, and structured-feedback schemas |
 | Voice | Browser Web Speech API with explicit `en-US` / `zh-CN` switching |
-| Testing | Playwright; 17 mobile Chromium journey, route, and provider tests |
+| Testing | Playwright plus axe-core across mobile, tablet, desktop Chromium, and desktop WebKit projects |
 | Hosting | OpenNext, Wrangler, and Cloudflare Workers |
 | Persistence | None by design for the MVP; session state is ephemeral |
 
@@ -140,8 +148,9 @@ MOONSHOT_API_KEY=your_server_side_key
 KIMI_MODEL=kimi-k3
 ```
 
-The three route contracts remain provider-neutral:
+The four route contracts remain provider-neutral:
 
+- `POST /api/context` — turn the validated setup into bounded, grounded campus guidance.
 - `POST /api/practice` — generate the opening or next professor turn.
 - `POST /api/feedback` — generate the completed-session report and action plan.
 - `POST /api/translate` — convert a Chinese draft into concise, natural spoken English.
@@ -159,10 +168,10 @@ npm run test:e2e
 Install the Playwright browser once if needed:
 
 ```bash
-npx playwright install chromium
+npx playwright install chromium webkit
 ```
 
-Current automated coverage includes:
+The current suite reports **31 passing checks** across five Playwright projects, with 12 intentional project-specific skips. Coverage includes:
 
 - personal versus sample setup;
 - grounded English and Simplified Chinese context guidance, including the no-feedback path;
@@ -171,12 +180,18 @@ Current automated coverage includes:
 - deterministic Demo openings and follow-ups;
 - `Enter`, `Shift` + `Enter`, and IME-safe submission;
 - mocked English and Mandarin speech recognition;
+- microphone denial, missing-device, stop/restart, and long-dictation handling;
 - Mandarin-to-natural-English conversion and restoration of the Chinese draft;
+- 375px portrait, mobile landscape, tablet, and desktop overflow and target-size checks;
+- keyboard focus, skip navigation, five-stage WCAG checks, reduced motion, and long unbroken content;
+- desktop WebKit layout coverage as an automated Safari-engine approximation;
 - Kimi request shapes, JSON Schema feedback, provider selection, and invalid-output rejection.
 
 ## Deploy to Cloudflare Workers
 
 Production: **[https://campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
+
+The current production release includes the grounded Context flow and the responsive/accessibility QA fixes.
 
 Preview the OpenNext build in Cloudflare’s local `workerd` runtime:
 
@@ -208,7 +223,10 @@ lib/ai/
   prompts.ts                # Context, role-play, feedback, and conversion prompts
   schemas.ts                # Request and structured-output validation
   mock.ts                   # Deterministic Demo output
-tests/e2e/                   # Office Hours and provider coverage
+tests/e2e/
+  office-hours.spec.ts      # Journey, keyboard, speech, translation
+  providers.spec.ts         # Contracts, grounding, fallback behavior
+  qa.spec.ts                # Responsive, accessibility, long-content QA
 types/practice.ts           # Shared UI and API contracts
 wrangler.jsonc              # Cloudflare Worker configuration
 open-next.config.ts         # OpenNext adapter configuration
@@ -220,8 +238,8 @@ open-next.config.ts         # OpenNext adapter configuration
 - Demo Context guidance is grounded in the student’s setup through fixed coaching rules; Kimi-generated context has not yet been evaluated with a funded key.
 - Emailing a Professor and Group Project Conflict are preview cards, not implemented journeys.
 - Voice input depends on browser Web Speech API support, microphone permission, and the browser’s speech service. Typed input remains available.
-- Automated voice tests use a browser mock; real Chrome and Safari microphone behavior still needs hands-on QA.
-- Automated UI coverage currently targets mobile Chromium; broader desktop, tablet, Safari, long-content, and reduced-motion QA remains.
+- Automated voice tests use a browser mock; real Chrome and Safari microphone behavior still needs hands-on QA on the devices planned for the demo.
+- Desktop WebKit automation exercises Safari’s browser engine, but it does not replace testing the actual Safari app, speech service, permissions, and microphone hardware.
 - The MVP has no authentication, database, saved history, analytics, or progress tracking.
 - Live-AI fallback is safe but does not yet have production observability.
 
@@ -230,7 +248,7 @@ open-next.config.ts         # OpenNext adapter configuration
 1. Evaluate Kimi for English dialogue, Simplified Chinese coaching, translation fidelity, transcript grounding, schema reliability, latency, cost, and fallback behavior.
 2. Test the Office Hours journey with Chinese and other international students new to U.S. university culture.
 3. Verify English and Mandarin dictation on the real Chrome and Safari devices planned for the demo.
-4. Complete cross-device and accessibility QA, then capture screenshots and record the hackathon demo.
+4. Perform final hands-on device QA, then capture screenshots and record the hackathon demo.
 5. Expand to Emailing a Professor only after the Office Hours journey is validated.
 
 ## Safety

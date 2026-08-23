@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function OfficeHoursPage() {
   return (
-    <main className="min-h-screen bg-[#fbfdfb]">
+    <main className="min-h-screen bg-[#fbfdfb]" id="main-content" tabIndex={-1}>
       <SiteHeader compact />
       <OfficeHoursExperience />
     </main>

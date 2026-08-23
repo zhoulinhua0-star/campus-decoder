@@ -18,7 +18,7 @@ export function FeedbackStage({ report, language, mode, notice, onContinue }: { 
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-[720px]">
             <span className="eyebrow">{demo ? (chinese ? "Demo 反馈示例" : "Representative demo feedback") : (chinese ? "你的练习反馈" : "Your practice feedback")}</span>
-            <h1 className="font-display mt-5 text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">{demo ? (chinese ? "这是未来个性化反馈的结构示例。" : "Here is how your personalized coaching will be structured.") : (chinese ? "你已经把焦虑变成了一个清晰目标。" : "You turned anxiety into a clear purpose.")}</h1>
+            <h1 className="font-display mt-5 text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl" tabIndex={-1}>{demo ? (chinese ? "这是未来个性化反馈的结构示例。" : "Here is how your personalized coaching will be structured.") : (chinese ? "你已经把焦虑变成了一个清晰目标。" : "You turned anxiety into a clear purpose.")}</h1>
           </div>
           <span className="inline-flex w-fit rounded-full bg-[#dcefeb] px-4 py-2 text-sm font-extrabold text-[#075d56]">{demo ? (chinese ? "示例报告" : "Sample report") : (chinese ? "练习已完成" : "Practice complete")}</span>
         </div>
@@ -43,14 +43,14 @@ export function FeedbackStage({ report, language, mode, notice, onContinue }: { 
             <dl className="mt-6 space-y-5">
               {ratingKeys.map(([key, label]) => {
                 const rating = Math.max(1, Math.min(5, Math.round(report.ratings[key])));
-                return <div key={key}><div className="flex items-center justify-between gap-4"><dt className="text-sm font-bold text-[#345652]">{label}</dt><dd className="text-sm font-extrabold text-[#0b2e2a]">{rating}<span className="font-semibold text-[#86928f]">/5</span></dd></div><div aria-hidden="true" className="mt-2 h-2 overflow-hidden rounded-full bg-[#e5efec]"><div className="h-full rounded-full bg-[#0b766d]" style={{ width: `${rating * 20}%` }} /></div></div>;
+                return <div className="grid grid-cols-[1fr_auto] items-center gap-x-4" key={key}><dt className="text-sm font-bold text-[#345652]">{label}</dt><dd className="contents"><span className="text-sm font-extrabold text-[#0b2e2a]">{rating}<span className="font-semibold text-[#536461]">/5</span></span><span aria-hidden="true" className="col-span-2 mt-2 h-2 overflow-hidden rounded-full bg-[#e5efec]"><span className="block h-full rounded-full bg-[#0b766d]" style={{ width: `${rating * 20}%` }} /></span></dd></div>;
               })}
             </dl>
           </aside>
         </div>
 
         <div className="mt-8">
-          <div><p className="text-xs font-extrabold uppercase tracking-[0.1em] text-[#b85f14]">{chinese ? "两个最有价值的改进" : "Two highest-value improvements"}</p><h2 className="font-display mt-2 text-3xl font-bold text-[#0b2e2a]">{chinese ? "保留你的声音，让表达更具体。" : "Keep your voice. Make the ask more specific."}</h2></div>
+          <div><p className="text-xs font-extrabold uppercase tracking-[0.1em] text-[#9a5011]">{chinese ? "两个最有价值的改进" : "Two highest-value improvements"}</p><h2 className="font-display mt-2 text-3xl font-bold text-[#0b2e2a]">{chinese ? "保留你的声音，让表达更具体。" : "Keep your voice. Make the ask more specific."}</h2></div>
           <div className="mt-6 grid gap-5 lg:grid-cols-2">
             {report.improvements.map((improvement, index) => (
               <article className="card overflow-hidden" key={`${improvement.dimension}-${index}`}>
@@ -58,7 +58,7 @@ export function FeedbackStage({ report, language, mode, notice, onContinue }: { 
                 <div className="p-6">
                   <p className="text-sm leading-7 text-[#59706e]">{improvement.why_it_matters}</p>
                   <div className="mt-5 grid gap-3">
-                    <div className="rounded-2xl bg-[#f5f6f5] p-4"><p className="text-[0.68rem] font-extrabold uppercase tracking-[0.1em] text-[#788784]">{chinese ? "练习中的表达" : "From the practice"}</p><p className="mt-2 text-sm italic leading-6 text-[#4f6360]">“{improvement.original_response}”</p></div>
+                    <div className="rounded-2xl bg-[#f5f6f5] p-4"><p className="text-[0.68rem] font-extrabold uppercase tracking-[0.1em] text-[#536461]">{chinese ? "练习中的表达" : "From the practice"}</p><p className="mt-2 text-sm italic leading-6 text-[#4f6360]">“{improvement.original_response}”</p></div>
                     <div className="rounded-2xl border border-[#b9d8d2] bg-[#eef7f3] p-4"><p className="text-[0.68rem] font-extrabold uppercase tracking-[0.1em] text-[#075d56]">{chinese ? "可以尝试" : "Try this"}</p><p className="mt-2 text-sm font-semibold leading-6 text-[#234a46]">“{improvement.suggested_response}”</p></div>
                   </div>
                 </div>

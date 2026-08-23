@@ -255,14 +255,14 @@ export function PracticeStage({ context, messages, isSending, isFinishing, notic
 
   return (
     <section className="page-shell py-7 sm:py-10">
-      <div className="grid gap-6 lg:grid-cols-[290px_1fr]">
-        <aside className="space-y-4 lg:sticky lg:top-5 lg:self-start">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[290px_minmax(0,1fr)]">
+        <aside className="min-w-0 space-y-4 lg:sticky lg:top-5 lg:self-start">
           <div className="card p-5">
             <p className="text-xs font-extrabold uppercase tracking-[0.1em] text-[#0b766d]">{chinese ? "练习目标" : "Practice goal"}</p>
-            <p className="mt-3 text-sm font-bold leading-6 text-[#234a46]">{context.goal}</p>
+            <p className="mt-3 text-sm font-bold leading-6 text-[#234a46] [overflow-wrap:anywhere]">{context.goal}</p>
             <dl className="mt-5 space-y-4 border-t border-[#e4eeeb] pt-5 text-sm">
               <div><dt className="font-extrabold text-[#0b2e2a]">{chinese ? "场景" : "Scenario"}</dt><dd className="mt-1 text-[#59706e]">Office Hours</dd></div>
-              <div><dt className="font-extrabold text-[#0b2e2a]">{chinese ? "课程" : "Course"}</dt><dd className="mt-1 text-[#59706e]">{context.course}</dd></div>
+              <div><dt className="font-extrabold text-[#0b2e2a]">{chinese ? "课程" : "Course"}</dt><dd className="mt-1 text-[#59706e] [overflow-wrap:anywhere]">{context.course}</dd></div>
               <div><dt className="font-extrabold text-[#0b2e2a]">{chinese ? "教授回复" : "Professor replies"}</dt><dd className="mt-1 text-[#59706e]">English</dd></div>
             </dl>
           </div>
@@ -272,11 +272,11 @@ export function PracticeStage({ context, messages, isSending, isFinishing, notic
           <button className="button-quiet w-full !justify-start" onClick={onBack} type="button"><ArrowLeftIcon className="h-4 w-4" /> {chinese ? "返回语境解释" : "Back to context"}</button>
         </aside>
 
-        <div className="card flex min-h-[680px] flex-col overflow-hidden !rounded-[28px]">
+        <div className="card flex min-h-[680px] min-w-0 flex-col overflow-hidden !rounded-[28px]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e4eeeb] px-5 py-4 sm:px-7">
             <div className="flex items-center gap-3">
               <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#dcefeb] text-[#075d56]"><MessageIcon className="h-5 w-5" /></span>
-              <div className="min-w-0"><h1 className="text-sm font-extrabold text-[#0b2e2a]">Practice Professor</h1><p className="text-xs font-semibold text-[#6a7775]">{context.course} · Office hours</p></div>
+              <div className="min-w-0"><h1 className="text-sm font-extrabold text-[#0b2e2a]" tabIndex={-1}>Practice Professor</h1><p className="text-xs font-semibold text-[#6a7775] [overflow-wrap:anywhere]">{context.course} · Office hours</p></div>
             </div>
             <span className="flex items-center gap-2 rounded-full bg-[#eef7f3] px-3 py-1.5 text-xs font-extrabold text-[#075d56]"><span className="h-2 w-2 rounded-full bg-[#23a094]" /> Practice room</span>
           </div>
@@ -328,7 +328,7 @@ export function PracticeStage({ context, messages, isSending, isFinishing, notic
               <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-1">
                   <button className="button-quiet !px-3 text-sm" onClick={() => setShowHints((shown) => !shown)} type="button"><SparkIcon className="h-4 w-4" /> {chinese ? "我卡住了" : "I’m stuck"}</button>
-                  <span className="text-xs text-[#86928f]">{draft.length}/2000</span>
+                  <span className="text-xs text-[#536461]">{draft.length}/2000</span>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   <div aria-label={chinese ? "语音识别语言" : "Voice recognition language"} className="flex rounded-full border border-[#adc9c3] bg-white p-1" role="group">

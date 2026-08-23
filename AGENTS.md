@@ -153,6 +153,8 @@ Before publishing meaningful changes:
 3. Run `npm run test:e2e` for user-flow changes.
 4. Verify the Cloudflare/OpenNext runtime for deployment changes.
 
+The Playwright configuration intentionally keeps the complete journey and provider suite on mobile Chromium while running focused QA across 375px portrait, mobile landscape, tablet, desktop Chromium, and desktop WebKit. CI must install both Chromium and WebKit. Preserve the axe-core five-stage accessibility scan, long-content checks, reduced-motion coverage, keyboard focus checks, and 44px target checks when changing the experience. WebKit automation is a Safari-engine approximation; real Safari permissions, speech services, and microphone hardware still require hands-on verification.
+
 The production target is Cloudflare Workers. GitHub Pages cannot host the server-side API routes, and Vercel is not the selected platform. The manual deployment workflow uses `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` repository secrets. When Kimi support is implemented, keep `MOONSHOT_API_KEY` as a Cloudflare runtime secret.
 
 ## Hackathon priorities

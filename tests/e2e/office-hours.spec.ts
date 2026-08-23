@@ -110,6 +110,52 @@ test("uses Shift+Enter for a new line and supports browser voice dictation", asy
   await expect(page.getByText("Your speech is now text. Edit it or send when ready.")).toBeVisible();
 });
 
+test("handles microphone denial, missing hardware, restart, and long speech", async ({ page }) => {
+  await page.addInitScript(() => {
+    let attempt = 0;
+    class MockSpeechRecognition {
+      continuous = false;
+      interimResults = false;
+      lang = "";
+      onstart: (() => void) | null = null;
+      onresult: ((event: unknown) => void) | null = null;
+      onerror: ((event: { error: string }) => void) | null = null;
+      onend: (() => void) | null = null;
+
+      start() {
+        attempt += 1;
+        this.onstart?.();
+        if (attempt === 1) this.onerror?.({ error: "not-allowed" });
+        else if (attempt === 2) this.onerror?.({ error: "audio-capture" });
+        else this.onresult?.({ results: [{ 0: { transcript: "A".repeat(2100) }, isFinal: true, length: 1 }] });
+        this.onend?.();
+      }
+
+      stop() { this.onend?.(); }
+      abort() {}
+    }
+
+    Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: MockSpeechRecognition });
+  });
+
+  await page.goto("/practice/office-hours");
+  await page.getByRole("button", { name: /Try the sample/ }).click();
+  await page.getByRole("button", { name: "See Office Hours guidance" }).click();
+  await page.getByRole("button", { name: "Start the role-play" }).click();
+
+  const microphone = page.getByRole("button", { name: "Start voice input in English" });
+  await microphone.click();
+  await expect(page.getByText("Microphone access is blocked. Allow it in your browser settings and try again.")).toBeVisible();
+  await microphone.click();
+  await expect(page.getByText("No microphone was found. Check your device connection.")).toBeVisible();
+  await microphone.click();
+
+  const composer = page.getByLabel("Your response to the professor");
+  await expect(composer).toHaveValue("A".repeat(2000));
+  await expect(page.getByText("Your speech is now text. Edit it or send when ready.")).toBeVisible();
+  await expect(composer).toBeFocused();
+});
+
 test("dictates in Mandarin and converts the editable draft to natural English", async ({ page }) => {
   await page.addInitScript(() => {
     class MockSpeechRecognition {

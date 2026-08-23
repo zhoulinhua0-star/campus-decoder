@@ -5,7 +5,7 @@ export function SiteHeader({ compact = false }: { compact?: boolean }) {
   return (
     <header className="border-b border-[#dbe8e4] bg-[rgba(251,253,251,0.92)] backdrop-blur-md">
       <div className="page-shell flex min-h-18 items-center justify-between gap-6 py-3">
-        <Link aria-label="Campus Decoder home" className="flex items-center gap-3 rounded-xl text-[#0b2e2a] no-underline" href="/">
+        <Link aria-label="Campus Decoder home" className="flex min-h-11 min-w-11 items-center gap-3 rounded-xl text-[#0b2e2a] no-underline" href="/">
           <CampusMark className="h-10 w-10" />
           <span className="font-display hidden text-xl font-bold tracking-[-0.02em] sm:inline">Campus Decoder</span>
         </Link>

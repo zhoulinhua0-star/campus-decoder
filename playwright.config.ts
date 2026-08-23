@@ -20,7 +20,43 @@ export default defineConfig({
     {
       name: "mobile-chromium",
       use: {
-        ...devices["Pixel 7"],
+        ...devices["iPhone 13"],
+        browserName: "chromium",
+        viewport: { width: 375, height: 812 },
+      },
+    },
+    {
+      name: "mobile-landscape-chromium",
+      testMatch: /qa\.spec\.ts/,
+      use: {
+        ...devices["iPhone 13"],
+        browserName: "chromium",
+        viewport: { width: 812, height: 375 },
+      },
+    },
+    {
+      name: "tablet-chromium",
+      testMatch: /qa\.spec\.ts/,
+      use: {
+        ...devices["iPad (gen 7)"],
+        browserName: "chromium",
+        viewport: { width: 768, height: 1024 },
+      },
+    },
+    {
+      name: "desktop-chromium",
+      testMatch: /qa\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
+    {
+      name: "desktop-webkit",
+      testMatch: /qa\.spec\.ts/,
+      use: {
+        ...devices["Desktop Safari"],
+        viewport: { width: 1440, height: 900 },
       },
     },
   ],
