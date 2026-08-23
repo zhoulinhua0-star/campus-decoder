@@ -120,6 +120,7 @@ Do not provide authoritative legal, immigration, medical, mental-health, or univ
 
 Primary boundaries:
 
+- `POST /api/context` turns the validated setup into four bounded fields: literal source, campus context, uncertainty, and a constructive next move.
 - `POST /api/practice` generates the context-aware opening or next professor turn.
 - `POST /api/feedback` generates the completed-session report and action plan.
 - `POST /api/translate` converts a user-reviewed Chinese practice draft into natural spoken English before it is sent to the simulated professor.
@@ -129,7 +130,7 @@ Primary boundaries:
 - Parse and validate every live response with the existing Zod contracts; retry or fall back to `DemoProvider` on invalid, empty, timed-out, or unavailable output.
 - Do not add a second live provider before Kimi is evaluated against English dialogue, bilingual coaching, schema reliability, latency, transcript grounding, and fallback behavior.
 - Keep scenario prompts and behavior in server-side modules.
-- Treat the Zod feedback schema as a UI contract. Update schemas, shared types, prompts, mocks, routes, and rendering together.
+- Treat the Zod context and feedback schemas as UI contracts. Update schemas, shared types, prompts, mocks, routes, and rendering together.
 - Client session state is intentionally ephemeral for the MVP.
 
 Key locations:

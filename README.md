@@ -26,7 +26,7 @@ Open **[Campus Decoder](https://campus-decoder.zhoulinhua0.workers.dev)**, choos
 
 1. Choose **Use my situation** for an empty form or **Try the sample** for the judge demo.
 2. Add the course, what happened, your concern, and what you want from the meeting.
-3. Review the campus norm before entering the practice room.
+3. Review a grounded decode of the literal source, likely campus context, uncertainty, and one constructive next move.
 4. Reply in English by typing or speaking. Press `Enter` to send and `Shift` + `Enter` for a new line.
 5. If you dictate in Mandarin, review the transcript and use the explicit **Convert to natural English** step before sending.
 6. Finish with transcript-grounded feedback and an editable meeting outline.
@@ -50,7 +50,7 @@ The focused MVP follows a newly arrived student who receives disappointing or un
 | Stage | Student outcome |
 | --- | --- |
 | **1 · Setup** | Describe a genuine situation or load the clearly separated sample. |
-| **2 · Context** | Understand what Office Hours are for, what is uncertain, and one constructive next move. |
+| **2 · Context** | Decode the submitted situation into literal source, campus context, uncertainty, and one constructive next move. |
 | **3 · Practice** | Write or dictate responses to a simulated professor in natural English. |
 | **4 · Feedback** | Review clarity, tone, specificity, initiative, campus fit, and two high-value improvements. |
 | **5 · Action** | Edit and copy a meeting outline for the real conversation. |
@@ -69,12 +69,13 @@ The focused MVP follows a newly arrived student who receives disappointing or un
 | Capability | Production Demo | Kimi live mode |
 | --- | --- | --- |
 | Availability | Default; no API key required | Optional; server-side key required |
+| Context decode | Deterministic guidance grounded in the submitted setup | Structured bilingual decode validated with Zod |
 | Opening turn | Neutral, deterministic opening | Context-aware opening generated from the setup |
 | Follow-up turns | Clearly labeled guided sample path | Dynamic English professor dialogue |
 | Feedback | Representative coaching grounded in submitted text | Structured bilingual coaching validated with Zod |
 | Mandarin dictation | Browser speech recognition | Browser speech recognition |
 | Natural-English conversion | Unavailable without fabrication; Chinese draft is preserved | Meaning-preserving English rewrite |
-| Failure behavior | Remains usable | Falls back safely to Demo for practice and feedback |
+| Failure behavior | Remains usable | Falls back safely to Demo for context, practice, and feedback |
 
 Demo ratings never pretend to be personalized AI analysis. Demo mode also refuses to fabricate an English conversion: `/api/translate` returns a safe unavailable response and keeps the original Chinese draft editable.
 
@@ -84,15 +85,17 @@ Demo ratings never pretend to be personalized AI analysis. Demo mode also refuse
 flowchart LR
     A["Student context"] --> B["Five-stage Office Hours UI"]
     V["Browser speech recognition\nEnglish or Mandarin"] --> B
+    B --> C["POST /api/context"]
     B --> P["POST /api/practice"]
     B --> F["POST /api/feedback"]
     B --> T["POST /api/translate"]
+    C --> S
     P --> S{"Configured provider"}
     F --> S
     T --> S
     S -- "Kimi + server key" --> K["Validated live output"]
     S -- "Default or failure" --> D["Honest deterministic Demo"]
-    K --> O["Practice · Feedback · Action"]
+    K --> O["Context · Practice · Feedback · Action"]
     D --> O
 ```
 
@@ -101,9 +104,9 @@ flowchart LR
 | Application | Next.js 16 App Router, React 19, TypeScript |
 | Interface | Tailwind CSS 4 with the project’s off-white, deep-teal, and warm-amber system |
 | AI boundary | `DemoProvider` and optional `KimiProvider` behind one server-side contract |
-| Validation | Zod request, translation, and structured-feedback schemas |
+| Validation | Zod request, context, translation, and structured-feedback schemas |
 | Voice | Browser Web Speech API with explicit `en-US` / `zh-CN` switching |
-| Testing | Playwright; 10 mobile Chromium journey and provider tests |
+| Testing | Playwright; 17 mobile Chromium journey, route, and provider tests |
 | Hosting | OpenNext, Wrangler, and Cloudflare Workers |
 | Persistence | None by design for the MVP; session state is ephemeral |
 
@@ -162,6 +165,8 @@ npx playwright install chromium
 Current automated coverage includes:
 
 - personal versus sample setup;
+- grounded English and Simplified Chinese context guidance, including the no-feedback path;
+- context request validation and invalid structured-output rejection;
 - context-aware opening requests with an empty transcript;
 - deterministic Demo openings and follow-ups;
 - `Enter`, `Shift` + `Enter`, and IME-safe submission;
@@ -192,6 +197,7 @@ The manual workflow at `.github/workflows/deploy-cloudflare.yml` uses the reposi
 ```text
 app/
   api/
+    context/route.ts        # Grounded campus-context decode
     practice/route.ts       # Opening and follow-up professor turns
     feedback/route.ts       # Structured feedback and action plan
     translate/route.ts      # Chinese draft to natural English
@@ -199,7 +205,7 @@ app/
 components/practice/        # Setup, context, practice, feedback, and action UI
 lib/ai/
   providers.ts              # Provider contract, Demo fallback, Kimi adapter
-  prompts.ts                # Role-play, feedback, and conversion prompts
+  prompts.ts                # Context, role-play, feedback, and conversion prompts
   schemas.ts                # Request and structured-output validation
   mock.ts                   # Deterministic Demo output
 tests/e2e/                   # Office Hours and provider coverage
@@ -211,7 +217,7 @@ open-next.config.ts         # OpenNext adapter configuration
 ## Current limits
 
 - Production still uses deterministic Demo mode; Kimi has not been evaluated with a funded key or enabled.
-- Campus Context is general guidance rather than a personalized interpretation of the student’s setup.
+- Demo Context guidance is grounded in the student’s setup through fixed coaching rules; Kimi-generated context has not yet been evaluated with a funded key.
 - Emailing a Professor and Group Project Conflict are preview cards, not implemented journeys.
 - Voice input depends on browser Web Speech API support, microphone permission, and the browser’s speech service. Typed input remains available.
 - Automated voice tests use a browser mock; real Chrome and Safari microphone behavior still needs hands-on QA.
@@ -224,9 +230,8 @@ open-next.config.ts         # OpenNext adapter configuration
 1. Evaluate Kimi for English dialogue, Simplified Chinese coaching, translation fidelity, transcript grounding, schema reliability, latency, cost, and fallback behavior.
 2. Test the Office Hours journey with Chinese and other international students new to U.S. university culture.
 3. Verify English and Mandarin dictation on the real Chrome and Safari devices planned for the demo.
-4. Personalize Campus Context while keeping source text, contextual interpretation, and uncertainty separate.
-5. Complete cross-device and accessibility QA, then capture screenshots and record the hackathon demo.
-6. Expand to Emailing a Professor only after the Office Hours journey is validated.
+4. Complete cross-device and accessibility QA, then capture screenshots and record the hackathon demo.
+5. Expand to Emailing a Professor only after the Office Hours journey is validated.
 
 ## Safety
 

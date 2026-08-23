@@ -20,8 +20,9 @@ test("completes the honest Office Hours demo flow", async ({ page }) => {
   await page.getByRole("button", { name: /Try the sample/ }).click();
   await page.getByRole("button", { name: "See Office Hours guidance" }).click();
 
-  await expect(page.getByRole("heading", { name: "Going to office hours is not wasting your professor’s time." })).toBeVisible();
-  await expect(page.getByText("This step explains the general campus norm; it is not yet AI-personalized analysis of your entries.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Separate what we know from what we still need to ask." })).toBeVisible();
+  await expect(page.getByText("The professor feedback you provided says: “The thesis is too broad, and the analysis needs to connect more clearly to the evidence.”")).toBeVisible();
+  await expect(page.getByText("Grounded Demo guidance uses the details you entered with fixed coaching rules; it is not personalized AI analysis.")).toBeVisible();
   await page.getByRole("button", { name: "Start the role-play" }).click();
 
   await expect(page.getByText("Step 3 of 5")).toBeVisible();
@@ -44,6 +45,27 @@ test("completes the honest Office Hours demo flow", async ({ page }) => {
 
   await page.getByRole("button", { name: "View sample action plan" }).click();
   await expect(page.getByRole("heading", { name: "Sample meeting outline" })).toBeVisible();
+});
+
+test("personalizes Chinese context coaching when no professor feedback is provided", async ({ page }) => {
+  const situation = "I understood the lecture, but I am unsure why my lab explanation was incomplete.";
+  const goal = "Learn how to make my next lab explanation more specific";
+  const concern = "I worry that asking for clarification will sound defensive.";
+
+  await page.goto("/practice/office-hours");
+  await page.getByLabel("Course or subject").fill("Introductory Biology");
+  await page.getByLabel("What do you want from this conversation?").fill(goal);
+  await page.getByLabel("What happened?").fill(situation);
+  await page.getByLabel(/What worries you most/).fill(concern);
+  await page.getByText("简体中文", { exact: true }).click();
+  await page.getByRole("button", { name: "See Office Hours guidance" }).click();
+
+  await expect(page.getByRole("heading", { name: "先分清我们知道什么，以及还不知道什么。" })).toBeVisible();
+  await expect(page.getByText(`你对事情经过的描述是：“${situation}”`)).toBeVisible();
+  await expect(page.getByText("你没有提供教授的原话，因此我们无法判断教授具体指的是哪一部分，也不能推测教授的个人意图。Office Hours 可以帮助你直接确认这些信息。")).toBeVisible();
+  await expect(page.getByText(goal, { exact: true })).toBeVisible();
+  await expect(page.getByText("Grounded Demo 指导会根据你填写的内容和固定的辅导规则生成；它不是 AI 个性化分析。")).toBeVisible();
+  await expect(page.getByRole("button", { name: "开始练习" })).toBeEnabled();
 });
 
 test("uses Shift+Enter for a new line and supports browser voice dictation", async ({ page }) => {

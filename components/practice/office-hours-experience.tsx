@@ -8,7 +8,7 @@ import { PracticeStage } from "@/components/practice/practice-stage";
 import { PracticeStage as Stage, ProgressSteps } from "@/components/practice/progress-steps";
 import { SetupStage } from "@/components/practice/setup-stage";
 import { DEMO_OPENING } from "@/lib/ai/constants";
-import type { FeedbackApiResponse, FeedbackReport, PracticeApiResponse, PracticeContext, PracticeMessage } from "@/types/practice";
+import type { ContextApiResponse, ContextGuidance, FeedbackApiResponse, FeedbackReport, PracticeApiResponse, PracticeContext, PracticeMessage } from "@/types/practice";
 
 const emptyContext: PracticeContext = {
   course: "",
@@ -28,14 +28,36 @@ const sampleContext: PracticeContext = {
   preferredLanguage: "English",
 };
 
+function getGeneralContextGuidance(context: PracticeContext): ContextGuidance {
+  if (context.preferredLanguage === "简体中文") {
+    return {
+      literal_source: "你希望通过 Office Hours 更好地理解当前情况，并确定一个可行的下一步。",
+      campus_context: "Office Hours 通常可以用来澄清课程内容、作业反馈和改进方向。提出具体问题通常体现主动性。",
+      uncertainty: "目前无法载入针对你所填内容的解释，因此这里不会推测教授的个人意图或具体要求。",
+      constructive_next_move: `带上相关材料，说明你的目标：“${context.goal}”，然后从一个具体问题开始。`,
+    };
+  }
+
+  return {
+    literal_source: "You want to use office hours to understand the situation and identify a workable next step.",
+    campus_context: "Office hours are commonly used to clarify course material, assignment feedback, and possible ways to improve. A specific question usually signals initiative.",
+    uncertainty: "Situation-specific guidance could not load, so this view does not infer the professor’s private intention or exact expectations.",
+    constructive_next_move: `Bring the relevant material, state your goal—“${context.goal}”—and begin with one specific question.`,
+  };
+}
+
 export function OfficeHoursExperience() {
   const [stage, setStage] = useState<Stage>("Setup");
   const [context, setContext] = useState(emptyContext);
   const [contextSource, setContextSource] = useState<"mine" | "sample">("mine");
   const [messages, setMessages] = useState<PracticeMessage[]>([]);
+  const [contextGuidance, setContextGuidance] = useState<ContextGuidance | null>(null);
+  const [contextMode, setContextMode] = useState<"live" | "demo" | null>(null);
+  const [contextNotice, setContextNotice] = useState<string | null>(null);
   const [report, setReport] = useState<FeedbackReport | null>(null);
   const [feedbackMode, setFeedbackMode] = useState<"live" | "demo" | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [isDecoding, setIsDecoding] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -46,13 +68,48 @@ export function OfficeHoursExperience() {
     setContextSource(source);
     setContext(source === "sample" ? sampleContext : emptyContext);
     setMessages([]);
+    setContextGuidance(null);
+    setContextMode(null);
+    setContextNotice(null);
     setNotice(null);
   }
 
   function updateContext(nextContext: PracticeContext) {
     setContext(nextContext);
     setMessages([]);
+    setContextGuidance(null);
+    setContextMode(null);
+    setContextNotice(null);
     setNotice(null);
+  }
+
+  async function decodeContext() {
+    setStage("Context");
+    setIsDecoding(true);
+    setContextGuidance(null);
+    setContextMode(null);
+    setContextNotice(null);
+
+    try {
+      const response = await fetch("/api/context", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ context }),
+      });
+      if (!response.ok) throw new Error("Context request failed");
+      const data = (await response.json()) as ContextApiResponse;
+      setContextGuidance(data.guidance);
+      setContextMode(data.mode);
+      setContextNotice(data.notice);
+    } catch {
+      setContextGuidance(getGeneralContextGuidance(context));
+      setContextMode(null);
+      setContextNotice(context.preferredLanguage === "简体中文"
+        ? "针对你所填内容的指导暂时无法载入，因此这里显示通用的 Office Hours 指导。"
+        : "Situation-specific guidance could not load, so general Office Hours guidance is shown.");
+    } finally {
+      setIsDecoding(false);
+    }
   }
 
   async function beginPractice() {
@@ -134,8 +191,8 @@ export function OfficeHoursExperience() {
   return (
     <>
       <ProgressSteps current={stage} />
-      {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={() => setStage("Context")} onSelectContextSource={selectContextSource} /> : null}
-      {stage === "Context" ? <ContextStage context={context} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}
+      {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={decodeContext} onSelectContextSource={selectContextSource} /> : null}
+      {stage === "Context" ? <ContextStage context={context} guidance={contextGuidance} isLoading={isDecoding} mode={contextMode} notice={contextNotice} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}
       {stage === "Practice" ? <PracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}
       {stage === "Feedback" && report && feedbackMode ? <FeedbackStage language={context.preferredLanguage} mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
       {stage === "Action" && report && feedbackMode ? <ActionStage language={context.preferredLanguage} mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}

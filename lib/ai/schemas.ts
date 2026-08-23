@@ -16,6 +16,17 @@ export const practiceMessageSchema = z.object({
   content: z.string().trim().min(1).max(2000),
 });
 
+export const contextRequestSchema = z.object({
+  context: practiceContextSchema,
+});
+
+export const contextGuidanceSchema = z.object({
+  literal_source: z.string().trim().min(1).max(2400),
+  campus_context: z.string().trim().min(1).max(1200),
+  uncertainty: z.string().trim().min(1).max(1200),
+  constructive_next_move: z.string().trim().min(1).max(1200),
+});
+
 export const practiceRequestSchema = z.object({
   context: practiceContextSchema,
   messages: z.array(practiceMessageSchema).max(20),

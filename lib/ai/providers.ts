@@ -1,12 +1,13 @@
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
-import { getMockFeedback, getMockProfessorReply } from "@/lib/ai/mock";
-import { buildContextPrompt, buildFeedbackInput, NATURAL_ENGLISH_TRANSLATION_PROMPT, OFFICE_HOURS_FEEDBACK_PROMPT, OFFICE_HOURS_ROLEPLAY_PROMPT } from "@/lib/ai/prompts";
-import { feedbackReportSchema, naturalEnglishSchema } from "@/lib/ai/schemas";
-import type { FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
+import { getMockContextGuidance, getMockFeedback, getMockProfessorReply } from "@/lib/ai/mock";
+import { buildContextGuidanceInput, buildContextPrompt, buildFeedbackInput, NATURAL_ENGLISH_TRANSLATION_PROMPT, OFFICE_HOURS_CONTEXT_PROMPT, OFFICE_HOURS_FEEDBACK_PROMPT, OFFICE_HOURS_ROLEPLAY_PROMPT } from "@/lib/ai/prompts";
+import { contextGuidanceSchema, feedbackReportSchema, naturalEnglishSchema } from "@/lib/ai/schemas";
+import type { ContextGuidance, FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
 
 export interface AiProvider {
   mode: "demo" | "live";
+  generateContextGuidance(context: PracticeContext): Promise<ContextGuidance>;
   generateProfessorReply(context: PracticeContext, messages: PracticeMessage[]): Promise<string>;
   generateFeedback(context: PracticeContext, messages: PracticeMessage[]): Promise<FeedbackReport>;
   translateToNaturalEnglish(text: string): Promise<string>;
@@ -14,6 +15,10 @@ export interface AiProvider {
 
 export class DemoProvider implements AiProvider {
   readonly mode = "demo" as const;
+
+  async generateContextGuidance(context: PracticeContext) {
+    return getMockContextGuidance(context);
+  }
 
   async generateProfessorReply(_context: PracticeContext, messages: PracticeMessage[]) {
     return getMockProfessorReply(messages);
@@ -33,6 +38,31 @@ export class KimiProvider implements AiProvider {
   readonly mode = "live" as const;
 
   constructor(private readonly client: OpenAI, private readonly model = "kimi-k3") {}
+
+  async generateContextGuidance(context: PracticeContext) {
+    const completion = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [
+        { role: "system", content: OFFICE_HOURS_CONTEXT_PROMPT },
+        { role: "user", content: buildContextGuidanceInput(context) },
+      ],
+      response_format: zodResponseFormat(contextGuidanceSchema, "office_hours_context_guidance"),
+      ...(this.model === "kimi-k3" ? { reasoning_effort: "low" as const } : {}),
+    });
+
+    if (completion.choices[0]?.finish_reason === "length") {
+      throw new Error("Kimi truncated the context guidance.");
+    }
+
+    const content = completion.choices[0]?.message.content?.trim();
+    if (!content) throw new Error("Kimi returned empty context guidance.");
+    const guidance = contextGuidanceSchema.parse(JSON.parse(content));
+    const literalSource = context.professorFeedback.trim() || context.whatHappened.trim();
+    if (!guidance.literal_source.includes(literalSource)) {
+      throw new Error("Kimi context guidance was not grounded in the submitted source.");
+    }
+    return guidance;
+  }
 
   async generateProfessorReply(context: PracticeContext, messages: PracticeMessage[]) {
     const completion = await this.client.chat.completions.create({

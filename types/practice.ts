@@ -14,6 +14,19 @@ export type PracticeMessage = {
   content: string;
 };
 
+export type ContextGuidance = {
+  literal_source: string;
+  campus_context: string;
+  uncertainty: string;
+  constructive_next_move: string;
+};
+
+export type ContextApiResponse = {
+  guidance: ContextGuidance;
+  mode: "live" | "demo";
+  notice: string | null;
+};
+
 export type PracticeApiResponse = {
   professorReply: string;
   mode: "live" | "demo";

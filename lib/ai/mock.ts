@@ -1,5 +1,39 @@
-import type { FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
+import type { ContextGuidance, FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
 import { DEMO_OPENING } from "@/lib/ai/constants";
+
+export function getMockContextGuidance(context: PracticeContext): ContextGuidance {
+  const chinese = context.preferredLanguage === "简体中文";
+  const feedback = context.professorFeedback.trim();
+  const concern = context.concern.trim();
+
+  if (chinese) {
+    return {
+      literal_source: feedback
+        ? `你提供的教授反馈原文是：“${feedback}”`
+        : `你对事情经过的描述是：“${context.whatHappened}”`,
+      campus_context: concern
+        ? `你提到的担忧是：“${concern}”\n\n在 Office Hours 中，请教授解释具体反馈通常是在主动学习，并不自动代表你在质疑分数或给教授添麻烦。`
+        : "Office Hours 通常就是用来澄清课程内容、作业反馈和改进方向的。提出具体问题通常体现主动性，并不自动代表你在质疑分数。",
+      uncertainty: feedback
+        ? "仅凭这段书面反馈，我们无法确定教授最希望你优先修改什么，也无法知道这段评语背后的个人意图。只有教授本人能进一步说明具体标准和优先顺序。"
+        : "你没有提供教授的原话，因此我们无法判断教授具体指的是哪一部分，也不能推测教授的个人意图。Office Hours 可以帮助你直接确认这些信息。",
+      constructive_next_move: `带上相关作业、课程要求${feedback ? "和这条反馈" : "以及你现有的笔记"}。先说明你的目标：“${context.goal}”，再请教授一起看一个具体例子，并确认一个可以尝试的下一步。`,
+    };
+  }
+
+  return {
+    literal_source: feedback
+      ? `The professor feedback you provided says: “${feedback}”`
+      : `You described what happened this way: “${context.whatHappened}”`,
+    campus_context: concern
+      ? `You named this concern: “${concern}”\n\nIn office hours, asking a professor to explain specific feedback usually shows initiative; it does not automatically mean you are challenging the grade or wasting the professor’s time.`
+      : "Office hours are a normal place to clarify course material, assignment feedback, and possible ways to improve. A specific question usually signals initiative; it does not automatically challenge the grade.",
+    uncertainty: feedback
+      ? "The written feedback alone cannot tell us which change the professor would prioritize or what private intention sits behind the comment. Only the professor can clarify the specific standard and next priority."
+      : "Without the professor’s exact wording, we cannot know which part they would prioritize or infer their private intention. Office hours can help you ask directly and clarify the missing detail.",
+    constructive_next_move: `Bring the relevant work, the course prompt, and ${feedback ? "this feedback" : "any notes you have"}. State your goal—“${context.goal}”—then ask the professor to look at one specific example with you and identify one next step to try.`,
+  };
+}
 
 export function getMockProfessorReply(messages: PracticeMessage[]) {
   const studentTurns = messages.filter((message) => message.role === "user");
