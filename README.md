@@ -12,10 +12,6 @@
 </p>
 
 <p align="center">
-  <a href="https://campus-decoder.zhoulinhua0.workers.dev/practice"><strong>Choose a Campus Decoder scenario →</strong></a>
-</p>
-
-<p align="center">
   <code>Equity in Education</code>
   <code>Next.js 16</code>
   <code>Cloudflare Workers</code>
