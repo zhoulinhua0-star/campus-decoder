@@ -1,14 +1,14 @@
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="Campus Decoder helps international students understand unfamiliar university norms, practice an Office Hours conversation, receive structured feedback, and leave with an action plan.">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Campus Decoder helps international students choose a campus scenario, understand the context, practice their own response, receive structured feedback, and leave with an editable next action.">
 </p>
 
 <p align="center">
   <strong>A campus communication coach for the university rules no one teaches.</strong><br>
-  Understand the context, practice the conversation, receive supportive feedback, and leave ready to act.
+  Choose a real moment, understand the context, practice your response, receive supportive feedback, and leave ready to act.
 </p>
 
 <p align="center">
-  <a href="https://campus-decoder.zhoulinhua0.workers.dev"><strong>Try the live Office Hours journey →</strong></a>
+  <a href="https://campus-decoder.zhoulinhua0.workers.dev/practice"><strong>Choose a Campus Decoder scenario →</strong></a>
 </p>
 
 <p align="center">
@@ -18,90 +18,95 @@
   <code>Works without an API key</code>
 </p>
 
-> **Live now:** one complete, deployed Office Hours journey with Kimi K2.6 campus-context coaching, typed or English voice input, structured feedback, and an editable meeting outline. Invalid, timed-out, or unavailable live output falls back to the clearly labeled deterministic Demo provider.
+> **Current release:** two complete five-stage journeys—**Office Hours** and **Emailing a Professor**—behind a neutral scenario chooser. **Group Project Conflict** remains an honest preview. The same release is deployed to Cloudflare Workers and works with either live Kimi coaching or the safe Demo fallback.
 
-## Try the product
+## Choose a campus moment
 
-Open **[Campus Decoder](https://campus-decoder.zhoulinhua0.workers.dev)**, choose **Practice Office Hours**, and complete one conversation:
+Run the current repository, open **[localhost:3000/practice](http://localhost:3000/practice)**, and choose one scenario:
 
-1. Choose **Use my situation** for an empty form or **Try the sample** for the judge demo.
-2. Review the grounded Context guidance, then practice your own English response by typing or speaking.
-3. Finish with transcript-grounded feedback and an editable meeting outline.
+| Scenario | What the student practices | Repository status |
+| --- | --- | --- |
+| **Office Hours** | Discuss feedback, ask focused questions, and identify a next step without sounding confrontational. | Complete |
+| **Emailing a Professor** | Revise an overly formal, vague, or apologetic draft into a clear email with an explicit request. | Complete |
+| **Group Project Conflict** | Follow up on missed work, propose task division, and handle disagreement constructively. | Preview only |
 
-The professor is presented honestly as **Practice Professor**, paired with the course the student entered. The opening turn is requested with the full situation context, while avoiding claims that the student has already shared private concerns aloud.
+The chooser gives all three scenarios the same visual hierarchy. Unfinished scenarios are never presented as usable flows.
 
-## Verified demo baseline
+## Verified baseline
 
 | Proof | Current result |
 | --- | --- |
-| Production | Homepage, Office Hours journey, and grounded Context API verified on Cloudflare Workers |
-| Automated regression | **32 passing checks**, 12 intentional project-specific skips, 0 failures |
+| Complete journeys | Office Hours and Emailing a Professor, each using Setup → Context → Practice → Feedback → Action |
+| Kimi email smoke checks | Local and production Email Context, Hint, and Feedback routes returned HTTP 200 with `mode: live` and complete structured fields |
+| Automated regression | **39 passing checks**, 16 intentional project-specific skips, 0 failures |
 | Responsive coverage | 375px portrait, mobile landscape, 768px tablet, and 1440px desktop |
 | Browser engines | Chromium plus desktop WebKit as a Safari-engine approximation |
-| Accessibility | Five-stage axe WCAG 2 A/AA scan, skip navigation, keyboard focus, 44px targets, and reduced-motion checks |
-| Resilience | Long unbroken content plus English speech mocks, permission denial, missing device, restart, and dictation length limit |
+| Accessibility | Five-stage axe WCAG 2 A/AA scans, skip navigation, keyboard focus, 44px targets, and reduced-motion checks |
+| Demo resilience | Deterministic no-key provider plus safe route-level fallback for invalid, timed-out, or unavailable live output |
 
 ## Why Campus Decoder exists
 
 English proficiency is not the same as cultural or institutional fluency.
 
-Chinese international students can arrive academically prepared while still lacking access to the university “hidden curriculum”: what Office Hours are for, how to ask a professor for clarification, when to follow up, and how to advocate for themselves without feeling impolite or confrontational.
+Chinese international students can arrive academically prepared while still lacking access to the university “hidden curriculum”: what Office Hours are for, how to ask a professor for clarification, how direct an email request should be, when to follow up, and how to advocate for themselves without feeling impolite or confrontational.
 
-Campus Decoder treats that gap as an **educational equity problem**, not merely a translation problem. The product loop is:
+Campus Decoder treats that gap as an **educational equity problem**, not merely a translation problem. The founder recently completed the university application process and brings direct familiarity with the Chinese international-student experience.
+
+The product loop is:
 
 > **Understand → Practice → Feedback → Act**
 
-The focused MVP follows a newly arrived student who receives disappointing or unclear feedback and is unsure how to approach Office Hours. Instead of supplying a perfect script immediately, Campus Decoder explains the norm, lets the student rehearse their own words, and turns the session into a concrete next action.
+The student sees the campus norm, tries their own wording, receives specific feedback grounded in what they submitted, and leaves with an editable artifact instead of generic reassurance.
 
-## One journey, five stages
+## Two journeys, one learning loop
 
-| Stage | Student outcome |
-| --- | --- |
-| **1 · Setup** | Describe a genuine situation or load the clearly separated sample. |
-| **2 · Context** | Decode the submitted situation into literal source, campus context, uncertainty, and one constructive next move. |
-| **3 · Practice** | Write or dictate responses to a simulated professor in natural English. |
-| **4 · Feedback** | Review clarity, tone, specificity, initiative, campus fit, and two high-value improvements. |
-| **5 · Action** | Edit and copy a meeting outline for the real conversation. |
+| Stage | Office Hours | Emailing a Professor |
+| --- | --- | --- |
+| **1 · Setup** | Course, goal, situation, concern, and optional professor feedback. | Course, recipient, purpose, situation, concern, and existing draft. |
+| **2 · Context** | Separate the literal source, campus context, uncertainty, and one constructive next move. | Explain what the email needs to communicate without predicting the professor’s response. |
+| **3 · Practice** | Write or dictate responses to a simulated Practice Professor. | Revise the draft personally while AI provides one focused hint and an optional sentence starter. |
+| **4 · Feedback** | Review clarity, tone, specificity, initiative, campus fit, and two high-value improvements. | Review tone, clarity, specificity, request clarity, and two grounded improvements. |
+| **5 · Action** | Edit and copy a meeting outline. | Edit and copy the final subject and email body; nothing is sent automatically. |
+
+In live Kimi mode, the final email is an AI-edited version of the student’s own revision. It must preserve submitted facts, purpose, and placeholders and may not invent dates, policies, permissions, or prior agreements. In Demo mode, the final email remains the student’s revision rather than pretending fixed coaching produced a personalized rewrite.
 
 ## What makes it different
 
 - **Cultural context, not mind-reading.** Coaching distinguishes literal source text, likely campus context, uncertainty, and a constructive next move.
-- **Practice before prescription.** The student writes their own response before seeing an editable alternative.
-- **Grounded feedback.** Demo comparisons quote only language the student actually submitted.
-- **A neutral practice identity.** The role-play no longer invents “Professor Chen” or assumes every situation concerns an essay.
-- **One focused English experience.** The interface, coaching, role-play, feedback, and action plan stay in English while addressing cross-cultural campus communication.
-- **Action over information.** Every completed session ends with a usable meeting outline rather than generic reassurance.
+- **Practice before prescription.** The student tries their own wording before seeing focused alternatives or an AI-edited final artifact.
+- **Grounded feedback.** Quoted comparisons must be verbatim excerpts from the student’s submitted response or revised draft.
+- **Cultural awareness without stereotypes.** The product explains common institutional patterns while preserving multiple valid communication styles and the student’s agency.
+- **One focused English experience.** The interface, coaching, simulated dialogue, feedback, and action artifacts remain English-only.
+- **Action over information.** Every completed session ends with something editable and usable: a meeting outline or professor email.
 
 ## Honest Demo and optional live AI
 
-| Capability | Demo fallback | Production Kimi mode |
+| Capability | Demo fallback | Kimi live mode |
 | --- | --- | --- |
-| Availability | Default; no API key required | Optional; server-side key required |
-| Context decode | Deterministic guidance grounded in the submitted setup | Structured English decode validated with Zod |
-| Opening turn | Neutral, deterministic opening | Context-aware opening generated from the setup |
-| Follow-up turns | Clearly labeled guided sample path | Dynamic English professor dialogue |
-| Feedback | Representative coaching grounded in submitted text | Structured English coaching validated with Zod |
-| English dictation | Browser speech recognition | Browser speech recognition |
-| Failure behavior | Remains usable | Falls back safely to Demo for context, practice, and feedback |
+| Availability | Default; no API key required | Server-side key required |
+| Context | Deterministic guidance grounded in submitted setup | Structured guidance validated with Zod |
+| Office Hours Practice | Clearly labeled guided professor path | Dynamic context-aware professor dialogue |
+| Email Practice | Fixed-rule hint that leaves the writing to the student | One structured, focused revision hint |
+| Feedback | Representative ratings and coaching; quotes remain grounded | Structured coaching with verbatim excerpt validation |
+| Action | Student-grounded meeting outline or unchanged revised email | Live action plan or AI-edited final email |
+| Failure behavior | Remains usable | Falls back safely and visibly to Demo |
 
-Demo ratings never pretend to be personalized AI analysis.
+Demo output never claims that fixed ratings or coaching are personalized AI analysis.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    A["Student context"] --> B["Five-stage Office Hours UI"]
-    V["Browser speech recognition\nEnglish"] --> B
-    B --> C["POST /api/context"]
-    B --> P["POST /api/practice"]
-    B --> F["POST /api/feedback"]
-    C --> S
-    P --> S{"Configured provider"}
-    F --> S
-    S -- "Kimi + server key" --> K["Validated live output"]
-    S -- "Default or failure" --> D["Honest deterministic Demo"]
-    K --> O["Context · Practice · Feedback · Action"]
-    D --> O
+    S["Scenario chooser"] --> O["Office Hours UI"]
+    S --> E["Emailing a Professor UI"]
+    O --> OA["/api/context · /api/practice · /api/feedback"]
+    E --> EA["/api/email/context · /api/email/hint · /api/email/feedback"]
+    OA --> P{"Configured provider"}
+    EA --> P
+    P -- "Kimi + server key" --> K["Validated live output"]
+    P -- "Default or failure" --> D["Honest deterministic Demo"]
+    K --> A["Editable meeting outline or email"]
+    D --> A
 ```
 
 | Layer | Implementation |
@@ -109,8 +114,8 @@ flowchart LR
 | Application | Next.js 16 App Router, React 19, TypeScript |
 | Interface | Tailwind CSS 4 with the project’s off-white, deep-teal, and warm-amber system |
 | AI boundary | `DemoProvider` and optional `KimiProvider` behind one server-side contract |
-| Validation | Zod request, context, and structured-feedback schemas |
-| Voice | Browser Web Speech API with explicit `en-US` / `zh-CN` switching |
+| Validation | Zod request and structured-output contracts for both journeys |
+| Voice | English browser speech recognition in Office Hours; typed input always remains available |
 | Testing | Playwright plus axe-core across mobile, tablet, desktop Chromium, and desktop WebKit projects |
 | Hosting | OpenNext, Wrangler, and Cloudflare Workers |
 | Persistence | None by design for the MVP; session state is ephemeral |
@@ -124,7 +129,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The complete deterministic journey works without an external AI service or API key.
+Open **[http://localhost:3000/practice](http://localhost:3000/practice)**. Both complete journeys work through the deterministic Demo provider without an external AI service or API key.
 
 ## Optional Kimi live mode
 
@@ -132,12 +137,12 @@ The app exposes one internal provider contract with two implementations:
 
 ```text
 DemoProvider   # Default, deterministic, no external service
-KimiProvider   # Optional live context, dialogue, and feedback
+KimiProvider   # Optional live context, practice, and feedback
 ```
 
-Kimi uses its OpenAI-compatible Chat Completions API. Structured feedback is requested with JSON Schema and validated again with the existing Zod contract.
+Kimi uses its OpenAI-compatible Chat Completions API. Structured output is requested with JSON Schema and validated again with Zod before the UI receives it.
 
-After funding and evaluating a Kimi project key, configure these **server-only** values:
+Configure these **server-only** values in `.env.local`:
 
 ```dotenv
 AI_PROVIDER=kimi
@@ -147,109 +152,111 @@ KIMI_PRACTICE_MODEL=kimi-k2.6
 KIMI_FEEDBACK_MODEL=kimi-k2.6
 ```
 
-`KIMI_MODEL` remains available as an optional global override. The evaluated default uses Kimi K2.6 with thinking disabled for all three operations. Context and Feedback allow up to 45 seconds per request and retry structured, truncated, empty, or ungrounded output once; Practice uses a 20-second request timeout. Live retries and fallbacks emit privacy-safe operation, model, reason, and latency metadata without student content, transcripts, source feedback, drafts, or credentials.
+Restart `npm run dev` after changing environment variables. `KIMI_MODEL` remains available as an optional global override. Never expose the API key through a `NEXT_PUBLIC_*` variable.
 
-The three route contracts remain provider-neutral:
+The provider-neutral route contracts are:
 
-- `POST /api/context` — turn the validated setup into bounded, grounded campus guidance.
-- `POST /api/practice` — generate the opening or next professor turn.
-- `POST /api/feedback` — generate the completed-session report and action plan.
+- `POST /api/context` — grounded Office Hours campus guidance.
+- `POST /api/practice` — Office Hours opening or next professor turn.
+- `POST /api/feedback` — Office Hours report and meeting outline.
+- `POST /api/email/context` — grounded professor-email context guidance.
+- `POST /api/email/hint` — one focused hint without a complete replacement draft.
+- `POST /api/email/feedback` — grounded email feedback and an editable final email.
 
-Never expose the API key through a `NEXT_PUBLIC_*` variable. Invalid, empty, truncated, timed-out, or unavailable live practice and feedback output falls back safely to the Demo provider.
+Context and Feedback allow up to 45 seconds per request; Practice and Hint use a 20-second timeout. Structured, empty, truncated, schema-invalid, or ungrounded output is retried where appropriate and then falls back safely. Privacy-safe telemetry records operation, model, reason, safe schema paths, and elapsed time without student inputs, transcripts, drafts, credentials, or raw errors.
 
 ## Verify changes
 
 ```bash
 npm run lint
 npm run build
-npm run test:e2e
+AI_PROVIDER=demo npm run test:e2e
 npm run test:kimi # opt-in funded live evaluation; never runs in CI
 ```
 
-Install the Playwright browser once if needed:
+Install Playwright browsers once if needed:
 
 ```bash
 npx playwright install chromium webkit
 ```
 
-The current suite reports **32 passing checks** across five Playwright projects, with 12 intentional project-specific skips. Coverage includes:
+The current suite reports **39 passing checks** across five Playwright projects, with 16 intentional project-specific skips. Coverage includes:
 
-- personal versus sample setup;
-- grounded English context guidance, including the no-feedback path;
-- context request validation and invalid structured-output rejection;
-- context-aware opening requests with an empty transcript;
-- deterministic Demo openings and follow-ups;
-- `Enter`, `Shift` + `Enter`, and IME-safe submission;
-- mocked English speech recognition;
-- microphone denial, missing-device, stop/restart, and long-dictation handling;
+- neutral homepage entry points and three equal-size scenario cards;
+- complete Office Hours and Emailing a Professor journeys;
+- required-field and unchanged-draft validation;
+- grounded Context, Feedback, and email excerpts;
+- Demo/Kimi provider selection, JSON Schema requests, retries, and fallback behavior;
+- browser speech mocks, microphone denial, missing-device, restart, and dictation limits;
 - 375px portrait, mobile landscape, tablet, and desktop overflow and target-size checks;
-- keyboard focus, skip navigation, five-stage WCAG checks, reduced motion, and long unbroken content;
-- desktop WebKit layout coverage as an automated Safari-engine approximation;
-- Kimi request shapes, JSON Schema feedback, provider selection, and invalid-output rejection.
+- keyboard focus, skip navigation, five-stage axe scans, reduced motion, and long unbroken content;
+- desktop WebKit layout coverage as an automated Safari-engine approximation.
 
 ## Deploy to Cloudflare Workers
 
-Production: **[https://campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
+Current production demo: **[campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
 
-The current production release includes live Kimi K2.6 Context, Practice, and Feedback, plus the responsive/accessibility QA fixes and deterministic Demo fallback.
-
-Preview the OpenNext build in Cloudflare’s local `workerd` runtime:
+The deployed release includes the neutral scenario chooser plus the complete Office Hours and Emailing a Professor journeys. Production smoke checks confirm that all four public pages load and that Email Context, Hint, and Feedback return validated live Kimi output.
 
 ```bash
 npm run preview:cloudflare
-```
-
-Deploy from an authenticated maintainer environment:
-
-```bash
 npm run deploy:cloudflare
 ```
 
-The manual workflow at `.github/workflows/deploy-cloudflare.yml` uses the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Before enabling Kimi, add `MOONSHOT_API_KEY` as a Cloudflare Worker secret and set `AI_PROVIDER=kimi` as a runtime variable. GitHub Pages is not supported because this application requires server-side Route Handlers.
+The manual workflow at `.github/workflows/deploy-cloudflare.yml` uses the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. Add `MOONSHOT_API_KEY` as a Cloudflare Worker secret and set `AI_PROVIDER=kimi` as a runtime variable. GitHub Pages is not supported because the product requires server-side Route Handlers.
 
 ## Project map
 
 ```text
 app/
   api/
-    context/route.ts        # Grounded campus-context decode
-    practice/route.ts       # Opening and follow-up professor turns
-    feedback/route.ts       # Structured feedback and action plan
-  practice/office-hours/    # Complete five-stage journey
-components/practice/        # Setup, context, practice, feedback, and action UI
+    context/route.ts              # Office Hours grounded context
+    practice/route.ts             # Office Hours professor turns
+    feedback/route.ts             # Office Hours feedback and action plan
+    email/
+      context/route.ts            # Email campus-context guidance
+      hint/route.ts               # Focused draft hint
+      feedback/route.ts           # Email feedback and final editable draft
+  practice/
+    page.tsx                      # Neutral three-scenario chooser
+    office-hours/                 # Complete five-stage Office Hours journey
+    email-professor/              # Complete five-stage email journey
+components/practice/              # Shared and journey-specific stage interfaces
 lib/ai/
-  providers.ts              # Provider contract, Demo fallback, Kimi adapter
-  prompts.ts                # Context, role-play, and feedback prompts
-  schemas.ts                # Request and structured-output validation
-  mock.ts                   # Deterministic Demo output
+  providers.ts                    # Demo/Kimi contract and fallback
+  prompts.ts                      # Office Hours prompts
+  email-prompts.ts                # Email Context, Hint, and Feedback prompts
+  schemas.ts                      # Office Hours validation
+  email-schemas.ts                # Email validation
+  mock.ts                         # Office Hours deterministic Demo output
+  email-mock.ts                   # Email deterministic Demo output
 tests/e2e/
-  office-hours.spec.ts      # Journey, keyboard, and English speech
-  providers.spec.ts         # Contracts, grounding, fallback behavior
-  qa.spec.ts                # Responsive, accessibility, long-content QA
-types/practice.ts           # Shared UI and API contracts
-wrangler.jsonc              # Cloudflare Worker configuration
-open-next.config.ts         # OpenNext adapter configuration
+  scenario-selection.spec.ts      # Neutral entry and equal card hierarchy
+  office-hours.spec.ts            # Office Hours journey and speech behavior
+  email-professor.spec.ts         # Complete email journey
+  providers.spec.ts               # Contracts, grounding, retry, fallback
+  qa.spec.ts                      # Responsive and accessibility QA
+types/
+  practice.ts                     # Office Hours contracts
+  email-practice.ts               # Email contracts
 ```
 
 ## Current limits
 
-- Production uses Kimi K2.6 for Context, Practice, and Feedback, with deterministic Demo output as the route-level failure fallback.
-- The local funded gate covers English Context and Feedback plus multi-turn English Practice. The sample is intentionally small and does not replace repeated hands-on product evaluation.
-- Emailing a Professor and Group Project Conflict are preview cards, not implemented journeys.
-- Voice input depends on browser Web Speech API support, microphone permission, and the browser’s speech service. Typed input remains available.
-- Automated voice tests use a browser mock; real Chrome and Safari microphone behavior still needs hands-on QA on the devices planned for the demo.
-- Desktop WebKit automation exercises Safari’s browser engine, but it does not replace testing the actual Safari app, speech service, permissions, and microphone hardware.
+- Group Project Conflict is a visible preview, not an implemented journey.
+- Live email Context, Hint, and Feedback passed both local and production runtime smoke checks, but repeated hands-on quality and latency evaluation is still needed.
+- Voice input is available only in Office Hours and depends on browser speech-recognition support, microphone permission, and the browser’s speech service. Typed input remains universal.
+- Desktop WebKit automation approximates Safari’s engine; real Safari permissions, speech services, and microphone hardware still require hands-on verification.
 - The MVP has no authentication, database, saved history, analytics, or progress tracking.
-- Privacy-safe retry and fallback events are implemented; production monitoring should now be reviewed as real Kimi traffic accumulates.
+- Guidance is educational and does not replace official university policy or qualified legal, immigration, medical, or mental-health advice.
 
 ## Next priorities
 
-1. Repeat the complete local Kimi journey hands-on and review English coaching quality and structured retry frequency.
-2. Test the Office Hours journey with Chinese and other international students new to U.S. university culture.
-3. Verify English dictation on the real Chrome and Safari devices planned for the demo.
-4. Monitor production latency, retry, fallback, quota, and rate-limit behavior before expanding traffic.
-5. Perform final hands-on device QA, then capture screenshots and record the hackathon demo.
-6. Expand to Emailing a Professor only after the Office Hours journey is validated.
+1. Run hands-on Emailing a Professor QA in live Kimi mode and review final-email factual preservation, tone, latency, and fallback behavior.
+2. Validate both complete journeys with Chinese and other international students new to U.S. university culture.
+3. Test English dictation on the real Chrome and Safari devices planned for the demo.
+4. Capture updated production screenshots and record the under-five-minute demo video.
+6. Build Group Project Conflict only after the two completed journeys are stable.
 
 ## Safety
 

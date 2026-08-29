@@ -32,5 +32,6 @@ export function ScenarioCard({ title, description, outcome, type, active = false
   );
 
   const classes = "card flex min-h-[390px] flex-col p-6 text-left no-underline transition duration-200";
-  return active ? <Link className={`${classes} hover:-translate-y-1 hover:border-[#78a69d] hover:shadow-[0_22px_50px_rgba(11,46,42,0.1)]`} href="/practice/office-hours">{content}</Link> : <article className={classes}>{content}</article>;
+  const href = type === "email" ? "/practice/email-professor" : "/practice/office-hours";
+  return active ? <Link className={`${classes} hover:-translate-y-1 hover:border-[#78a69d] hover:shadow-[0_22px_50px_rgba(11,46,42,0.1)]`} href={href}>{content}</Link> : <article className={classes}>{content}</article>;
 }

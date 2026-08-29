@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
   <title id="title">Campus Decoder</title>
-  <desc id="desc">Campus Decoder helps international students understand hidden university norms, practice an Office Hours conversation, receive structured feedback, and leave with an action plan.</desc>
+  <desc id="desc">Campus Decoder helps international students choose a campus scenario, understand the context, practice their own response, receive structured feedback, and leave with an editable next action.</desc>
 
   <rect width="1200" height="420" rx="30" fill="#FBFDFB"/>
   <rect x="1" y="1" width="1198" height="418" rx="29" fill="none" stroke="#CFE0DC" stroke-width="2"/>
@@ -19,8 +19,8 @@
     <text x="0" y="0" fill="#0B2E2A" font-family="Georgia, 'Songti SC', serif" font-size="68" font-weight="700" letter-spacing="-2">Campus Decoder</text>
     <rect x="0" y="29" width="56" height="4" rx="2" fill="#B85F14"/>
     <text x="0" y="75" fill="#153D39" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="29" font-weight="650">Decode the rules no one teaches.</text>
-    <text x="0" y="116" fill="#59706E" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="22">Understand hidden campus norms, practice the real</text>
-    <text x="0" y="148" fill="#59706E" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="22">conversation, and leave ready to act.</text>
+    <text x="0" y="116" fill="#59706E" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="22">Understand hidden campus norms, practice your own</text>
+    <text x="0" y="148" fill="#59706E" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif" font-size="22">response, and leave with something usable.</text>
   </g>
 
   <g id="journey" transform="translate(58 344)">
@@ -36,25 +36,37 @@
 
   <g id="product-proof" transform="translate(700 38)">
     <rect width="440" height="344" rx="26" fill="#FFFFFF" stroke="#CFE0DC" stroke-width="2"/>
-    <rect x="18" y="18" width="404" height="48" rx="15" fill="#EEF7F3"/>
-    <circle cx="45" cy="42" r="12" fill="#0B766D"/>
-    <path d="M40 42h10M45 37v10" stroke="#FFFFFF" stroke-linecap="round" stroke-width="2"/>
-    <text x="68" y="39" fill="#0B2E2A" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="700">Office Hours</text>
-    <text x="68" y="58" fill="#6A7775" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">Practice Professor</text>
-    <rect x="304" y="29" width="104" height="26" rx="13" fill="#DCEFEB"/>
-    <text x="322" y="47" fill="#075D56" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14" font-weight="750">EN / 简中</text>
+    <rect x="18" y="18" width="404" height="54" rx="15" fill="#EEF7F3"/>
+    <circle cx="47" cy="45" r="12" fill="#0B766D"/>
+    <path d="M42 45h10M47 40v10" stroke="#FFFFFF" stroke-linecap="round" stroke-width="2"/>
+    <text x="72" y="43" fill="#0B2E2A" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="21" font-weight="700">Choose a scenario</text>
+    <text x="72" y="62" fill="#6A7775" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">one guided learning path</text>
 
-    <rect x="22" y="88" width="318" height="58" rx="18" fill="#EEF7F3"/>
-    <text x="40" y="114" fill="#234A46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">What would be most helpful for us</text>
-    <text x="40" y="136" fill="#234A46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">to focus on today?</text>
+    <rect x="22" y="92" width="396" height="64" rx="18" fill="#FFFFFF" stroke="#CFE0DC"/>
+    <circle cx="52" cy="124" r="16" fill="#DCEFEB"/>
+    <path d="m43 125 9-7 9 7M46 127v9m5-9v9m6-9v9M43 138h18" fill="none" stroke="#075D56" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7"/>
+    <text x="80" y="121" fill="#0B2E2A" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="700">Office Hours</text>
+    <text x="80" y="143" fill="#59706E" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="17">Conversation practice</text>
+    <rect x="338" y="111" width="64" height="26" rx="13" fill="#DCEFEB"/>
+    <text x="350" y="129" fill="#075D56" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="700">READY</text>
 
-    <rect x="88" y="164" width="330" height="68" rx="18" fill="#0B766D"/>
-    <text x="108" y="191" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">I want to understand the feedback</text>
-    <text x="108" y="215" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18">and improve my next essay.</text>
+    <rect x="22" y="170" width="396" height="64" rx="18" fill="#FFFFFF" stroke="#CFE0DC"/>
+    <circle cx="52" cy="202" r="16" fill="#DCEFEB"/>
+    <rect x="42" y="195" width="20" height="15" rx="3" fill="none" stroke="#075D56" stroke-width="1.7"/>
+    <path d="m43.5 197 8.5 7 8.5-7" fill="none" stroke="#075D56" stroke-linejoin="round" stroke-width="1.7"/>
+    <text x="80" y="199" fill="#0B2E2A" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="700">Emailing a Professor</text>
+    <text x="80" y="221" fill="#59706E" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="17">Draft revision</text>
+    <rect x="338" y="189" width="64" height="26" rx="13" fill="#DCEFEB"/>
+    <text x="350" y="207" fill="#075D56" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="700">READY</text>
 
-    <rect x="22" y="252" width="396" height="72" rx="18" fill="#FFF7E8" stroke="#F0D09F"/>
-    <circle cx="48" cy="278" r="8" fill="#F4B65E"/>
-    <text x="68" y="278" fill="#8D4B12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="700" letter-spacing="1">CAMPUS CONTEXT</text>
-    <text x="42" y="307" fill="#69401B" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="17">Asking how to improve signals initiative.</text>
+    <rect x="22" y="248" width="396" height="76" rx="18" fill="#FFF7E8" stroke="#F0D09F"/>
+    <circle cx="52" cy="286" r="16" fill="#FFE7C0"/>
+    <circle cx="48" cy="282" r="4" fill="none" stroke="#9A5011" stroke-width="1.7"/>
+    <circle cx="57" cy="284" r="3.2" fill="none" stroke="#9A5011" stroke-width="1.7"/>
+    <path d="M41 295c.6-5 3-7 7-7 4.2 0 6.4 2.2 7 7m0-5c3.6-.8 6.3.8 7 4.5" fill="none" stroke="#9A5011" stroke-linecap="round" stroke-width="1.7"/>
+    <text x="80" y="280" fill="#3D3326" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="700">Group Project Conflict</text>
+    <text x="80" y="304" fill="#79502C" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="17">Constructive collaboration</text>
+    <rect x="340" y="273" width="62" height="26" rx="13" fill="#FFE7C0"/>
+    <text x="350" y="291" fill="#8D4B12" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15" font-weight="700">NEXT</text>
   </g>
 </svg>

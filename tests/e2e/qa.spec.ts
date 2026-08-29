@@ -53,7 +53,15 @@ test("keeps landing and setup responsive with large interaction targets", async 
   await expectNoHorizontalOverflow(page);
   await expectLargeEnoughTargets(page);
 
+  await page.goto("/practice");
+  await expectNoHorizontalOverflow(page);
+  await expectLargeEnoughTargets(page);
+
   await page.goto("/practice/office-hours");
+  await expectNoHorizontalOverflow(page);
+  await expectLargeEnoughTargets(page);
+
+  await page.goto("/practice/email-professor");
   await expectNoHorizontalOverflow(page);
   await expectLargeEnoughTargets(page);
 });
@@ -134,6 +142,9 @@ test("has no automated accessibility violations across core stages", async ({ pa
   await page.goto("/");
   await expectAccessible(page);
 
+  await page.goto("/practice");
+  await expectAccessible(page);
+
   await page.goto("/practice/office-hours");
   await expectAccessible(page);
   await page.getByRole("button", { name: /Try the sample/ }).click();
@@ -153,5 +164,28 @@ test("has no automated accessibility violations across core stages", async ({ pa
 
   await page.getByRole("button", { name: "View sample action plan" }).click();
   await expect(page.getByRole("heading", { name: "Sample meeting outline" })).toBeVisible();
+  await expectAccessible(page);
+});
+
+test("keeps the email journey accessible through all five stages", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/practice/email-professor");
+  await expectAccessible(page);
+  await page.getByRole("button", { name: /Try the sample email/ }).click();
+  await page.getByRole("button", { name: "See email guidance" }).click();
+  await expect(page.getByRole("heading", { name: "Help the professor understand the purpose and the next step." })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByRole("button", { name: "Revise my draft" }).click();
+  const editor = page.getByLabel("Your revised email");
+  await editor.fill("Dear Professor Morgan,\n\nI have two research questions for our next paper. Could we meet briefly this week so I can ask which one is focused enough?\n\nBest,\n[Your name]");
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Review my revision" }).click();
+  await expect(page.getByRole("heading", { name: "Here is how your revised email will be reviewed." })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByRole("button", { name: "Open final email" }).click();
+  await expect(page.getByRole("heading", { name: "Review your editable email before you use it." })).toBeVisible();
   await expectAccessible(page);
 });

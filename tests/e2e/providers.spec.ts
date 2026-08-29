@@ -1,11 +1,14 @@
 import { expect, test } from "@playwright/test";
 import type OpenAI from "openai";
 import { POST as createContextGuidance } from "@/app/api/context/route";
+import { POST as createEmailFeedback } from "@/app/api/email/feedback/route";
 import { DEMO_OPENING } from "@/lib/ai/constants";
+import { getMockEmailContextGuidance, getMockEmailFeedback, getMockEmailHint } from "@/lib/ai/email-mock";
 import { getMockContextGuidance, getMockFeedback } from "@/lib/ai/mock";
 import { DemoProvider, getAiProvider, KIMI_REQUEST_TIMEOUTS, KimiProvider } from "@/lib/ai/providers";
 import { AiProviderFailure, classifyAiFailure, logAiFallback, logAiRetry } from "@/lib/ai/telemetry";
 import type { PracticeContext, PracticeMessage } from "@/types/practice";
+import type { EmailPracticeContext } from "@/types/email-practice";
 
 const context: PracticeContext = {
   course: "First-Year Writing Seminar",
@@ -19,6 +22,17 @@ const messages: PracticeMessage[] = [
   { role: "assistant", content: "Hi, what would you like to discuss?" },
   { role: "user", content: "Could we discuss the feedback on my thesis?" },
 ];
+
+const emailContext: EmailPracticeContext = {
+  course: "First-Year Writing Seminar",
+  recipient: "Professor Morgan",
+  purpose: "Ask for a brief meeting about my research topic",
+  whatHappened: "I narrowed my topic to two possible questions.",
+  concern: "I worry that asking for help will sound unprepared.",
+  existingDraft: "Dear Professor Morgan,\n\nCould you help with my topic?\n\nBest,\n[Your name]",
+};
+
+const revisedEmail = "Dear Professor Morgan,\n\nI have narrowed my topic to two questions. Could we meet briefly to discuss which one is focused enough?\n\nBest,\n[Your name]";
 
 function createFakeClient(contents: string[], finishReasons: string[] = []) {
   const requests: unknown[] = [];
@@ -89,6 +103,50 @@ test("DemoProvider grounds context guidance in the submitted source", async () =
   expect(guidance.campus_context).toContain("I worry about wasting the professor's time.");
   expect(guidance.uncertainty).toContain("cannot tell us");
   expect(guidance.constructive_next_move).toContain("Understand the feedback");
+});
+
+test("DemoProvider keeps the student in control of the email revision", async () => {
+  const provider = new DemoProvider();
+  const guidance = await provider.generateEmailContextGuidance(emailContext);
+  const hint = await provider.generateEmailHint(emailContext, emailContext.existingDraft);
+  const report = await provider.generateEmailFeedback(emailContext, revisedEmail);
+
+  expect(guidance.literal_source).toContain(emailContext.existingDraft);
+  expect(hint.sentence_starter.length).toBeLessThan(100);
+  expect(hint.observation).not.toContain(revisedEmail);
+  expect(report.final_email).toBe(revisedEmail);
+  expect(report.improvements.every((item) => revisedEmail.includes(item.original_excerpt))).toBe(true);
+});
+
+test("email feedback route rejects an unchanged draft", async () => {
+  const response = await createEmailFeedback(new Request("http://localhost/api/email/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context: emailContext, revisedDraft: emailContext.existingDraft }),
+  }));
+
+  expect(response.status).toBe(400);
+  await expect(response.json()).resolves.toEqual({ error: "Revise the draft before requesting feedback." });
+});
+
+test("KimiProvider validates grounded email context, hints, and feedback", async () => {
+  const expectedGuidance = getMockEmailContextGuidance(emailContext);
+  const expectedHint = getMockEmailHint(revisedEmail);
+  const expectedReport = getMockEmailFeedback(emailContext, revisedEmail);
+  const { client, requests } = createFakeClient([
+    JSON.stringify(expectedGuidance),
+    JSON.stringify(expectedHint),
+    JSON.stringify(expectedReport),
+  ]);
+  const provider = new KimiProvider(client);
+
+  await expect(provider.generateEmailContextGuidance(emailContext)).resolves.toEqual(expectedGuidance);
+  await expect(provider.generateEmailHint(emailContext, revisedEmail)).resolves.toEqual(expectedHint);
+  await expect(provider.generateEmailFeedback(emailContext, revisedEmail)).resolves.toEqual(expectedReport);
+  expect(requests).toHaveLength(3);
+  expect(requests[0]).toMatchObject({ response_format: { type: "json_schema" } });
+  expect(requests[1]).toMatchObject({ messages: expect.arrayContaining([{ role: "system", content: expect.stringContaining("Do not rewrite the full email") }]) });
+  expect(requests[2]).toMatchObject({ messages: expect.arrayContaining([{ role: "system", content: expect.stringContaining("verbatim contiguous excerpt") }]) });
 });
 
 test("KimiProvider requests and validates structured context guidance", async () => {

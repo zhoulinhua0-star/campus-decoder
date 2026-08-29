@@ -1,10 +1,14 @@
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import type { ZodType } from "zod";
+import { getMockEmailContextGuidance, getMockEmailFeedback, getMockEmailHint } from "@/lib/ai/email-mock";
+import { buildEmailFeedbackInput, buildEmailGuidanceInput, buildEmailHintInput, EMAIL_CONTEXT_PROMPT, EMAIL_FEEDBACK_PROMPT, EMAIL_HINT_PROMPT } from "@/lib/ai/email-prompts";
+import { emailContextGuidanceSchema, emailFeedbackReportSchema, emailHintSchema } from "@/lib/ai/email-schemas";
 import { getMockContextGuidance, getMockFeedback, getMockProfessorReply } from "@/lib/ai/mock";
 import { buildContextGuidanceInput, buildContextPrompt, buildFeedbackInput, OFFICE_HOURS_CONTEXT_PROMPT, OFFICE_HOURS_FEEDBACK_PROMPT, OFFICE_HOURS_ROLEPLAY_PROMPT } from "@/lib/ai/prompts";
 import { contextGuidanceSchema, feedbackReportSchema } from "@/lib/ai/schemas";
 import { AiProviderFailure, type AiOperation, logAiRetry } from "@/lib/ai/telemetry";
+import type { EmailContextGuidance, EmailFeedbackReport, EmailHint, EmailPracticeContext } from "@/types/email-practice";
 import type { ContextGuidance, FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
 
 type KimiModels = Record<AiOperation, string>;
@@ -65,6 +69,9 @@ export interface AiProvider {
   generateContextGuidance(context: PracticeContext): Promise<ContextGuidance>;
   generateProfessorReply(context: PracticeContext, messages: PracticeMessage[]): Promise<string>;
   generateFeedback(context: PracticeContext, messages: PracticeMessage[]): Promise<FeedbackReport>;
+  generateEmailContextGuidance(context: EmailPracticeContext): Promise<EmailContextGuidance>;
+  generateEmailHint(context: EmailPracticeContext, draft: string): Promise<EmailHint>;
+  generateEmailFeedback(context: EmailPracticeContext, revisedDraft: string): Promise<EmailFeedbackReport>;
 }
 
 export class DemoProvider implements AiProvider {
@@ -84,6 +91,18 @@ export class DemoProvider implements AiProvider {
 
   async generateFeedback(context: PracticeContext, messages: PracticeMessage[]) {
     return getMockFeedback(context, messages);
+  }
+
+  async generateEmailContextGuidance(context: EmailPracticeContext) {
+    return getMockEmailContextGuidance(context);
+  }
+
+  async generateEmailHint(_context: EmailPracticeContext, draft: string) {
+    return getMockEmailHint(draft);
+  }
+
+  async generateEmailFeedback(context: EmailPracticeContext, revisedDraft: string) {
+    return getMockEmailFeedback(context, revisedDraft);
   }
 
 }
@@ -187,6 +206,101 @@ export class KimiProvider implements AiProvider {
     const report = parseStructuredOutput(completion.choices[0]?.message.content, feedbackReportSchema);
     const studentResponses = messages.filter((message) => message.role === "user").map((message) => message.content);
     if (report.improvements.some((improvement) => !studentResponses.some((response) => response.includes(improvement.original_response)))) {
+      throw new AiProviderFailure("grounding_failed");
+    }
+    return report;
+  }
+
+  async generateEmailContextGuidance(context: EmailPracticeContext) {
+    try {
+      return await this.requestEmailContextGuidance(context, false);
+    } catch (error) {
+      if (!shouldRetryStructuredFailure(error)) throw error;
+      logAiRetry({ operation: "context", model: this.modelFor("context"), error });
+      return this.requestEmailContextGuidance(context, true);
+    }
+  }
+
+  private async requestEmailContextGuidance(context: EmailPracticeContext, retry: boolean) {
+    const model = this.modelFor("context");
+    const completion = await this.client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: EMAIL_CONTEXT_PROMPT },
+        {
+          role: "user",
+          content: `${buildEmailGuidanceInput(context)}${retry ? "\nThis is a retry after an invalid response. Return only the exact four-field JSON object and preserve the entire existing draft verbatim." : ""}`,
+        },
+      ],
+      response_format: zodResponseFormat(emailContextGuidanceSchema, "email_context_guidance"),
+      ...getKimiModelSettings(model),
+    }, { timeout: KIMI_REQUEST_TIMEOUTS.context, maxRetries: 1 });
+
+    if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
+    const guidance = parseStructuredOutput(completion.choices[0]?.message.content, emailContextGuidanceSchema);
+    if (!guidance.literal_source.includes(context.existingDraft.trim())) {
+      throw new AiProviderFailure("grounding_failed");
+    }
+    return guidance;
+  }
+
+  async generateEmailHint(context: EmailPracticeContext, draft: string) {
+    try {
+      return await this.requestEmailHint(context, draft, false);
+    } catch (error) {
+      if (!shouldRetryStructuredFailure(error)) throw error;
+      logAiRetry({ operation: "practice", model: this.modelFor("practice"), error });
+      return this.requestEmailHint(context, draft, true);
+    }
+  }
+
+  private async requestEmailHint(context: EmailPracticeContext, draft: string, retry: boolean) {
+    const model = this.modelFor("practice");
+    const completion = await this.client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: EMAIL_HINT_PROMPT },
+        {
+          role: "user",
+          content: `${buildEmailHintInput(context, draft)}${retry ? "\nThis is a retry after an invalid response. Return only the exact four-field JSON hint and do not write a complete email." : ""}`,
+        },
+      ],
+      response_format: zodResponseFormat(emailHintSchema, "email_revision_hint"),
+      ...getKimiModelSettings(model),
+    }, { timeout: KIMI_REQUEST_TIMEOUTS.practice, maxRetries: 1 });
+
+    if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
+    return parseStructuredOutput(completion.choices[0]?.message.content, emailHintSchema);
+  }
+
+  async generateEmailFeedback(context: EmailPracticeContext, revisedDraft: string) {
+    try {
+      return await this.requestEmailFeedback(context, revisedDraft, false);
+    } catch (error) {
+      if (!shouldRetryStructuredFailure(error)) throw error;
+      logAiRetry({ operation: "feedback", model: this.modelFor("feedback"), error });
+      return this.requestEmailFeedback(context, revisedDraft, true);
+    }
+  }
+
+  private async requestEmailFeedback(context: EmailPracticeContext, revisedDraft: string, retry: boolean) {
+    const model = this.modelFor("feedback");
+    const completion = await this.client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: EMAIL_FEEDBACK_PROMPT },
+        {
+          role: "user",
+          content: `${buildEmailFeedbackInput(context, revisedDraft)}${retry ? "\nThis is a retry after an invalid response. Follow the exact JSON fields, types, counts, and verbatim excerpt requirements." : ""}`,
+        },
+      ],
+      response_format: zodResponseFormat(emailFeedbackReportSchema, "email_feedback"),
+      ...getKimiModelSettings(model),
+    }, { timeout: KIMI_REQUEST_TIMEOUTS.feedback, maxRetries: 1 });
+
+    if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
+    const report = parseStructuredOutput(completion.choices[0]?.message.content, emailFeedbackReportSchema);
+    if (report.improvements.some((improvement) => !revisedDraft.includes(improvement.original_excerpt))) {
       throw new AiProviderFailure("grounding_failed");
     }
     return report;

@@ -4,7 +4,9 @@ test("completes the honest Office Hours demo flow", async ({ page }) => {
   const studentResponse = "Thanks for meeting with me. Could we discuss the feedback on my first paragraph?";
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Practice office hours" }).click();
+  await page.locator("main > section").first().getByRole("link", { name: "Choose a scenario" }).click();
+  await expect(page).toHaveURL(/\/practice$/);
+  await page.getByRole("link", { name: /Office Hours/ }).click();
 
   await expect(page.getByText("Step 1 of 5")).toBeVisible();
   await expect(page.getByLabel("Course or subject")).toHaveValue("");
