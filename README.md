@@ -18,7 +18,7 @@
   <code>Works without an API key</code>
 </p>
 
-> **Live now:** one complete, deployed Office Hours journey with grounded campus-context coaching, typed or English voice input, structured feedback, and an editable meeting outline. Production intentionally uses the clearly labeled deterministic Demo provider; Kimi is implemented locally but not enabled.
+> **Live now:** one complete, deployed Office Hours journey with Kimi K2.6 campus-context coaching, typed or English voice input, structured feedback, and an editable meeting outline. Invalid, timed-out, or unavailable live output falls back to the clearly labeled deterministic Demo provider.
 
 ## Try the product
 
@@ -74,7 +74,7 @@ The focused MVP follows a newly arrived student who receives disappointing or un
 
 ## Honest Demo and optional live AI
 
-| Capability | Production Demo | Kimi live mode |
+| Capability | Demo fallback | Production Kimi mode |
 | --- | --- | --- |
 | Availability | Default; no API key required | Optional; server-side key required |
 | Context decode | Deterministic guidance grounded in the submitted setup | Structured English decode validated with Zod |
@@ -191,7 +191,7 @@ The current suite reports **32 passing checks** across five Playwright projects,
 
 Production: **[https://campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
 
-The current production release includes the grounded Context flow and the responsive/accessibility QA fixes.
+The current production release includes live Kimi K2.6 Context, Practice, and Feedback, plus the responsive/accessibility QA fixes and deterministic Demo fallback.
 
 Preview the OpenNext build in Cloudflare’s local `workerd` runtime:
 
@@ -233,21 +233,21 @@ open-next.config.ts         # OpenNext adapter configuration
 
 ## Current limits
 
-- Production still uses deterministic Demo mode; the funded Kimi boundary has been evaluated locally but is not enabled in production.
+- Production uses Kimi K2.6 for Context, Practice, and Feedback, with deterministic Demo output as the route-level failure fallback.
 - The local funded gate covers English Context and Feedback plus multi-turn English Practice. The sample is intentionally small and does not replace repeated hands-on product evaluation.
 - Emailing a Professor and Group Project Conflict are preview cards, not implemented journeys.
 - Voice input depends on browser Web Speech API support, microphone permission, and the browser’s speech service. Typed input remains available.
 - Automated voice tests use a browser mock; real Chrome and Safari microphone behavior still needs hands-on QA on the devices planned for the demo.
 - Desktop WebKit automation exercises Safari’s browser engine, but it does not replace testing the actual Safari app, speech service, permissions, and microphone hardware.
 - The MVP has no authentication, database, saved history, analytics, or progress tracking.
-- Privacy-safe retry and fallback events are implemented, but there is no production Kimi traffic to observe until live mode is deliberately enabled.
+- Privacy-safe retry and fallback events are implemented; production monitoring should now be reviewed as real Kimi traffic accumulates.
 
 ## Next priorities
 
 1. Repeat the complete local Kimi journey hands-on and review English coaching quality and structured retry frequency.
 2. Test the Office Hours journey with Chinese and other international students new to U.S. university culture.
 3. Verify English dictation on the real Chrome and Safari devices planned for the demo.
-4. Decide whether the measured latency and retry rate are acceptable before configuring Cloudflare secrets or enabling production Kimi.
+4. Monitor production latency, retry, fallback, quota, and rate-limit behavior before expanding traffic.
 5. Perform final hands-on device QA, then capture screenshots and record the hackathon demo.
 6. Expand to Emailing a Professor only after the Office Hours journey is validated.
 
