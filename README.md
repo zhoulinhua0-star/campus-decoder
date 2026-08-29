@@ -8,6 +8,10 @@
 </p>
 
 <p align="center">
+  <a href="https://campus-decoder.zhoulinhua0.workers.dev"><strong>Access the Live Website here</strong></a>
+</p>
+
+<p align="center">
   <a href="https://campus-decoder.zhoulinhua0.workers.dev/practice"><strong>Choose a Campus Decoder scenario →</strong></a>
 </p>
 
