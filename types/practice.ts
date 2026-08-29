@@ -1,12 +1,9 @@
-export type CoachingLanguage = "English" | "简体中文";
-
 export type PracticeContext = {
   course: string;
   goal: string;
   whatHappened: string;
   concern: string;
   professorFeedback: string;
-  preferredLanguage: CoachingLanguage;
 };
 
 export type PracticeMessage = {
@@ -31,11 +28,6 @@ export type PracticeApiResponse = {
   professorReply: string;
   mode: "live" | "demo";
   notice: string | null;
-};
-
-export type TranslationApiResponse = {
-  translation: string;
-  mode: "live";
 };
 
 export type Dimension = "Clarity" | "Tone" | "Specificity" | "Initiative" | "Campus fit";

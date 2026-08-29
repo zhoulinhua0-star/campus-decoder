@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { demoProvider, getAiProvider } from "@/lib/ai/providers";
 import { practiceRequestSchema } from "@/lib/ai/schemas";
+import { logAiFallback } from "@/lib/ai/telemetry";
 
 export async function POST(request: Request) {
   const parsed = practiceRequestSchema.safeParse(await request.json().catch(() => null));
@@ -19,13 +20,15 @@ export async function POST(request: Request) {
     });
   }
 
+  const startedAt = Date.now();
   try {
     return NextResponse.json({
       professorReply: await provider.generateProfessorReply(context, messages),
       mode: "live",
       notice: null,
     });
-  } catch {
+  } catch (error) {
+    logAiFallback({ operation: "practice", model: provider.modelFor("practice"), error, elapsedMs: Date.now() - startedAt });
     return NextResponse.json({
       professorReply: await demoProvider.generateProfessorReply(context, messages),
       mode: "demo",

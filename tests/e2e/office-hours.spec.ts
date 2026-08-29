@@ -47,27 +47,6 @@ test("completes the honest Office Hours demo flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Sample meeting outline" })).toBeVisible();
 });
 
-test("personalizes Chinese context coaching when no professor feedback is provided", async ({ page }) => {
-  const situation = "I understood the lecture, but I am unsure why my lab explanation was incomplete.";
-  const goal = "Learn how to make my next lab explanation more specific";
-  const concern = "I worry that asking for clarification will sound defensive.";
-
-  await page.goto("/practice/office-hours");
-  await page.getByLabel("Course or subject").fill("Introductory Biology");
-  await page.getByLabel("What do you want from this conversation?").fill(goal);
-  await page.getByLabel("What happened?").fill(situation);
-  await page.getByLabel(/What worries you most/).fill(concern);
-  await page.getByText("简体中文", { exact: true }).click();
-  await page.getByRole("button", { name: "See Office Hours guidance" }).click();
-
-  await expect(page.getByRole("heading", { name: "先分清我们知道什么，以及还不知道什么。" })).toBeVisible();
-  await expect(page.getByText(`你对事情经过的描述是：“${situation}”`)).toBeVisible();
-  await expect(page.getByText("你没有提供教授的原话，因此我们无法判断教授具体指的是哪一部分，也不能推测教授的个人意图。Office Hours 可以帮助你直接确认这些信息。")).toBeVisible();
-  await expect(page.getByText(goal, { exact: true })).toBeVisible();
-  await expect(page.getByText("Grounded Demo 指导会根据你填写的内容和固定的辅导规则生成；它不是 AI 个性化分析。")).toBeVisible();
-  await expect(page.getByRole("button", { name: "开始练习" })).toBeEnabled();
-});
-
 test("uses Shift+Enter for a new line and supports browser voice dictation", async ({ page }) => {
   await page.addInitScript(() => {
     class MockSpeechRecognition {
@@ -154,56 +133,6 @@ test("handles microphone denial, missing hardware, restart, and long speech", as
   await expect(composer).toHaveValue("A".repeat(2000));
   await expect(page.getByText("Your speech is now text. Edit it or send when ready.")).toBeVisible();
   await expect(composer).toBeFocused();
-});
-
-test("dictates in Mandarin and converts the editable draft to natural English", async ({ page }) => {
-  await page.addInitScript(() => {
-    class MockSpeechRecognition {
-      continuous = false;
-      interimResults = false;
-      lang = "";
-      onstart: (() => void) | null = null;
-      onresult: ((event: unknown) => void) | null = null;
-      onerror: ((event: unknown) => void) | null = null;
-      onend: (() => void) | null = null;
-
-      start() {
-        this.onstart?.();
-        this.onresult?.({ results: [{ 0: { transcript: "我想更好地理解教授对我论文论点的反馈。" }, isFinal: true, length: 1 }] });
-      }
-
-      stop() { this.onend?.(); }
-      abort() {}
-    }
-
-    Object.defineProperty(window, "SpeechRecognition", { configurable: true, value: MockSpeechRecognition });
-  });
-  await page.route("**/api/translate", async (route) => {
-    await route.fulfill({
-      contentType: "application/json",
-      body: JSON.stringify({ translation: "I’d like to better understand your feedback on my thesis.", mode: "live" }),
-    });
-  });
-
-  await page.goto("/practice/office-hours");
-  await page.getByRole("button", { name: /Try the sample/ }).click();
-  await page.getByRole("button", { name: "See Office Hours guidance" }).click();
-  await page.getByRole("button", { name: "Start the role-play" }).click();
-
-  await page.getByRole("button", { name: "Mandarin Chinese voice recognition" }).click();
-  await expect(page.getByRole("button", { name: "Mandarin Chinese voice recognition" })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Start voice input in Mandarin Chinese" }).click();
-
-  const composer = page.getByLabel("Your response to the professor");
-  await expect(composer).toHaveValue("我想更好地理解教授对我论文论点的反馈。");
-  await expect(page.getByRole("button", { name: "Send response" })).toBeDisabled();
-  await page.getByRole("button", { name: "Stop voice input" }).click();
-  await page.getByRole("button", { name: "Convert to natural English" }).click();
-
-  await expect(composer).toHaveValue("I’d like to better understand your feedback on my thesis.");
-  await expect(page.getByText("Converted to natural English. Review and edit it before sending.")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Restore Chinese draft" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Send response" })).toBeEnabled();
 });
 
 test("requests a context-aware opening before the student speaks", async ({ page }) => {

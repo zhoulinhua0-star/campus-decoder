@@ -1,14 +1,11 @@
 import { z } from "zod";
 
-export const coachingLanguageSchema = z.enum(["English", "简体中文"]);
-
 export const practiceContextSchema = z.object({
   course: z.string().trim().min(2).max(120),
   goal: z.string().trim().min(4).max(500),
   whatHappened: z.string().trim().min(4).max(1200),
   concern: z.string().trim().max(500),
   professorFeedback: z.string().trim().max(2000),
-  preferredLanguage: coachingLanguageSchema,
 });
 
 export const practiceMessageSchema = z.object({
@@ -41,16 +38,6 @@ export const feedbackRequestSchema = z.object({
 }).refine(({ messages }) => messages.some((message) => message.role === "user"), {
   message: "At least one student response is required.",
   path: ["messages"],
-});
-
-export const translationRequestSchema = z.object({
-  text: z.string().trim().min(1).max(2000).refine((text) => /[\u3400-\u9fff]/u.test(text), {
-    message: "The draft must include Chinese text.",
-  }),
-});
-
-export const naturalEnglishSchema = z.string().trim().min(1).max(2000).refine((text) => !/[\u3400-\u9fff]/u.test(text), {
-  message: "The translation must be English only.",
 });
 
 const improvementSchema = z.object({

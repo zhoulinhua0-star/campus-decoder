@@ -4,6 +4,12 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-21",
   "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "AI_PROVIDER": "kimi",
+    "KIMI_CONTEXT_MODEL": "kimi-k2.6",
+    "KIMI_PRACTICE_MODEL": "kimi-k2.6",
+    "KIMI_FEEDBACK_MODEL": "kimi-k2.6"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

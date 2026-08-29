@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { demoProvider, getAiProvider } from "@/lib/ai/providers";
 import { feedbackRequestSchema } from "@/lib/ai/schemas";
+import { logAiFallback } from "@/lib/ai/telemetry";
 
 export async function POST(request: Request) {
   const parsed = feedbackRequestSchema.safeParse(await request.json().catch(() => null));
@@ -19,13 +20,15 @@ export async function POST(request: Request) {
     });
   }
 
+  const startedAt = Date.now();
   try {
     return NextResponse.json({
       report: await provider.generateFeedback(context, messages),
       mode: "live",
       notice: null,
     });
-  } catch {
+  } catch (error) {
+    logAiFallback({ operation: "feedback", model: provider.modelFor("feedback"), error, elapsedMs: Date.now() - startedAt });
     return NextResponse.json({
       report: await demoProvider.generateFeedback(context, messages),
       mode: "demo",

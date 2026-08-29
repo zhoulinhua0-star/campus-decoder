@@ -34,7 +34,7 @@ export default function Home() {
             </div>
             <div className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-[#59706e]">
               <span className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-[#0b766d]" /> No account needed</span>
-              <span className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-[#0b766d]" /> English + 简体中文 coaching</span>
+              <span className="flex items-center gap-2"><CheckIcon className="h-4 w-4 text-[#0b766d]" /> Culturally aware coaching</span>
             </div>
           </div>
 

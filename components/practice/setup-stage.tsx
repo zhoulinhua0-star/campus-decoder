@@ -131,19 +131,6 @@ export function SetupStage({ context, contextSource, onChange, onContinue, onSel
             </div>
           </div>
 
-          <fieldset className="mt-6">
-            <legend className="field-label">Coaching language</legend>
-            <p className="field-help !mt-0 mb-3">Professor dialogue stays in English. Explanations follow this choice.</p>
-            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#eef3f1] p-1.5">
-              {(["English", "简体中文"] as const).map((language) => (
-                <label className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl px-4 text-sm font-extrabold transition ${context.preferredLanguage === language ? "bg-white text-[#075d56] shadow-sm" : "text-[#59706e] hover:text-[#153d39]"}`} key={language}>
-                  <input checked={context.preferredLanguage === language} className="sr-only" name="language" onChange={() => update("preferredLanguage", language)} type="radio" />
-                  {language}
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
           <div className="mt-8 flex flex-col-reverse gap-3 border-t border-[#e4eeeb] pt-6 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs leading-5 text-[#6a7775]">Avoid sharing names or sensitive personal information.</p>
             <button className="button-primary shrink-0" type="submit">See Office Hours guidance <ArrowRightIcon className="h-5 w-5" /></button>

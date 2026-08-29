@@ -39,7 +39,7 @@ Emailing a Professor and Group Project Conflict are expansion scenarios. They ma
 
 ### Setup
 
-Collect only what is needed: course, goal, what happened, concern, optional professor feedback or source text, and coaching language.
+Collect only what is needed: course, goal, what happened, concern, and optional professor feedback or source text.
 
 ### Context
 
@@ -66,11 +66,9 @@ End with an immediately usable artifact such as a meeting outline, question list
 
 ## Language and cultural guidance
 
-- The interface and judge-facing demo are English-first.
-- `preferredLanguage` supports `English` and `简体中文` and must remain extensible.
-- Simulated professor dialogue and suggested real-world messages remain in natural English.
-- Campus context, coaching, improvement explanations, and next steps follow `preferredLanguage`.
-- Default to English when the preference is missing or unsupported.
+- The MVP interface, coaching, simulated professor dialogue, feedback, and action artifacts are English-only.
+- The primary audience remains Chinese international students; the product addresses cultural and institutional fluency rather than direct translation.
+- Do not reintroduce localization, Mandarin dictation, or translation before the English Office Hours journey is validated and demo-ready.
 - Use `campus_context`, not `hidden_meaning`, in structured output.
 - Treat cultural patterns as context, not stereotypes. Preserve multiple valid communication styles and the user’s agency.
 
@@ -83,7 +81,7 @@ The application must remain usable without any live-provider API key. `DemoProvi
 - Demo feedback may quote only text the user actually submitted.
 - Demo output must not imply that fixed content is AI-personalized analysis.
 - Live-AI failures should fall back safely rather than strand the user mid-session.
-- Chinese speech-to-text may use the browser's speech-recognition capability. Natural-English conversion must use the server-side provider boundary; if live AI is unavailable, preserve the Chinese draft and explain that conversion is unavailable rather than fabricating a translation.
+- English speech-to-text may use the browser's speech-recognition capability. Typed input must remain available when speech recognition is unsupported or unavailable.
 
 ## Scope and safety
 
@@ -92,7 +90,7 @@ In scope for the hackathon:
 - One complete, polished Office Hours journey.
 - Three visible scenario choices.
 - Structured cross-cultural practice and feedback.
-- Optional Simplified Chinese coaching.
+- English-only culturally aware coaching.
 - A concrete final action artifact.
 
 Do not add authentication, a database, persistence, voice, or institution-specific directories before the Office Hours journey is validated. Do not turn the product into a universal tutor, admissions service, inbox, task manager, or campus portal.
@@ -123,12 +121,11 @@ Primary boundaries:
 - `POST /api/context` turns the validated setup into four bounded fields: literal source, campus context, uncertainty, and a constructive next move.
 - `POST /api/practice` generates the context-aware opening or next professor turn.
 - `POST /api/feedback` generates the completed-session report and action plan.
-- `POST /api/translate` converts a user-reviewed Chinese practice draft into natural spoken English before it is sent to the simulated professor.
 - Select the runtime through `AI_PROVIDER`; the first supported modes should be `demo` and `kimi`.
 - Keep `MOONSHOT_API_KEY` and all future provider credentials server-only. Never expose them through `NEXT_PUBLIC_*` or call a model provider from client components.
 - Preserve one internal provider contract so routes, shared types, and UI components do not depend on a vendor SDK.
 - Parse and validate every live response with the existing Zod contracts; retry or fall back to `DemoProvider` on invalid, empty, timed-out, or unavailable output.
-- Do not add a second live provider before Kimi is evaluated against English dialogue, bilingual coaching, schema reliability, latency, transcript grounding, and fallback behavior.
+- Do not add a second live provider before Kimi is evaluated against English dialogue and coaching, schema reliability, latency, transcript grounding, and fallback behavior.
 - Keep scenario prompts and behavior in server-side modules.
 - Treat the Zod context and feedback schemas as UI contracts. Update schemas, shared types, prompts, mocks, routes, and rendering together.
 - Client session state is intentionally ephemeral for the MVP.

@@ -3,7 +3,8 @@ import type OpenAI from "openai";
 import { POST as createContextGuidance } from "@/app/api/context/route";
 import { DEMO_OPENING } from "@/lib/ai/constants";
 import { getMockContextGuidance, getMockFeedback } from "@/lib/ai/mock";
-import { DemoProvider, getAiProvider, KimiProvider } from "@/lib/ai/providers";
+import { DemoProvider, getAiProvider, KIMI_REQUEST_TIMEOUTS, KimiProvider } from "@/lib/ai/providers";
+import { AiProviderFailure, classifyAiFailure, logAiFallback, logAiRetry } from "@/lib/ai/telemetry";
 import type { PracticeContext, PracticeMessage } from "@/types/practice";
 
 const context: PracticeContext = {
@@ -12,7 +13,6 @@ const context: PracticeContext = {
   whatHappened: "I received unclear essay feedback.",
   concern: "I worry about wasting the professor's time.",
   professorFeedback: "The thesis is too broad.",
-  preferredLanguage: "English",
 };
 
 const messages: PracticeMessage[] = [
@@ -20,22 +20,33 @@ const messages: PracticeMessage[] = [
   { role: "user", content: "Could we discuss the feedback on my thesis?" },
 ];
 
-function createFakeClient(contents: string[]) {
+function createFakeClient(contents: string[], finishReasons: string[] = []) {
   const requests: unknown[] = [];
+  const requestOptions: unknown[] = [];
   let index = 0;
   const client = {
     chat: {
       completions: {
-        create: async (request: unknown) => {
+        create: async (request: unknown, options: unknown) => {
           requests.push(request);
+          requestOptions.push(options);
           return {
-            choices: [{ finish_reason: "stop", message: { content: contents[index++] ?? null } }],
+            choices: [{ finish_reason: finishReasons[index] ?? "stop", message: { content: contents[index++] ?? null } }],
           };
         },
       },
     },
   } as unknown as OpenAI;
-  return { client, requests };
+  return { client, requests, requestOptions };
+}
+
+async function failureReason(promise: Promise<unknown>) {
+  try {
+    await promise;
+    return null;
+  } catch (error) {
+    return classifyAiFailure(error);
+  }
 }
 
 test("uses DemoProvider when Kimi is not fully configured", () => {
@@ -80,38 +91,26 @@ test("DemoProvider grounds context guidance in the submitted source", async () =
   expect(guidance.constructive_next_move).toContain("Understand the feedback");
 });
 
-test("DemoProvider supports Chinese context coaching without professor feedback", async () => {
-  const provider = new DemoProvider();
-  const guidance = await provider.generateContextGuidance({
-    ...context,
-    professorFeedback: "",
-    preferredLanguage: "简体中文",
-  });
-
-  expect(guidance.literal_source).toContain(context.whatHappened);
-  expect(guidance.uncertainty).toContain("没有提供教授的原话");
-  expect(guidance.constructive_next_move).toContain(context.goal);
-});
-
 test("KimiProvider requests and validates structured context guidance", async () => {
   const expectedGuidance = getMockContextGuidance(context);
-  const { client, requests } = createFakeClient([JSON.stringify(expectedGuidance)]);
+  const { client, requests, requestOptions } = createFakeClient([JSON.stringify(expectedGuidance)]);
   const provider = new KimiProvider(client);
 
   await expect(provider.generateContextGuidance(context)).resolves.toEqual(expectedGuidance);
   expect(requests[0]).toMatchObject({
-    model: "kimi-k3",
-    reasoning_effort: "low",
+    model: "kimi-k2.6",
+    thinking: { type: "disabled" },
     response_format: { type: "json_schema", json_schema: { strict: true } },
     messages: [
-      { role: "system", content: expect.stringContaining("exactly four structured fields") },
+      { role: "system", content: expect.stringContaining("exactly four string fields") },
       { role: "user", content: expect.stringContaining("Professor feedback provided by student: The thesis is too broad.") },
     ],
   });
+  expect(requestOptions[0]).toMatchObject({ timeout: KIMI_REQUEST_TIMEOUTS.context, maxRetries: 1 });
 });
 
 test("KimiProvider receives private context when generating the opening", async () => {
-  const { client, requests } = createFakeClient(["Welcome. What would you like to focus on in our meeting today?"]);
+  const { client, requests, requestOptions } = createFakeClient(["Welcome. What would you like to focus on in our meeting today?"]);
   const provider = new KimiProvider(client);
 
   await expect(provider.generateProfessorReply(context, [])).resolves.toContain("What would you like to focus on");
@@ -122,50 +121,78 @@ test("KimiProvider receives private context when generating the opening", async 
     ],
   });
   expect(requests[0]).toMatchObject({
+    model: "kimi-k2.6",
+    thinking: { type: "disabled" },
     messages: expect.arrayContaining([
       { role: "user", content: expect.stringContaining("private simulation context, not a student utterance") },
     ]),
   });
+  expect(requestOptions[0]).toMatchObject({ timeout: KIMI_REQUEST_TIMEOUTS.practice, maxRetries: 1 });
 });
 
 test("KimiProvider sends Chat Completions requests and validates feedback", async () => {
   const expectedReport = getMockFeedback(context, messages);
-  const { client, requests } = createFakeClient([
+  const { client, requests, requestOptions } = createFakeClient([
     "Let's look at the thesis comment first. What part feels unclear?",
     JSON.stringify(expectedReport),
-    "Could we look at the feedback on my thesis together?",
   ]);
   const provider = new KimiProvider(client);
 
   await expect(provider.generateProfessorReply(context, messages)).resolves.toContain("thesis comment");
   await expect(provider.generateFeedback(context, messages)).resolves.toEqual(expectedReport);
-  await expect(provider.translateToNaturalEnglish("我们可以一起看看关于我论文论点的反馈吗？")).resolves.toBe("Could we look at the feedback on my thesis together?");
-  expect(requests[0]).toMatchObject({ model: "kimi-k3", reasoning_effort: "low" });
+  expect(requests[0]).toMatchObject({ model: "kimi-k2.6", thinking: { type: "disabled" } });
   expect(requests[1]).toMatchObject({
-    model: "kimi-k3",
-    reasoning_effort: "low",
+    model: "kimi-k2.6",
+    thinking: { type: "disabled" },
     response_format: { type: "json_schema", json_schema: { strict: true } },
   });
-  expect(requests[2]).toMatchObject({
-    model: "kimi-k3",
-    reasoning_effort: "low",
+  expect(requestOptions).toEqual([
+    expect.objectContaining({ timeout: KIMI_REQUEST_TIMEOUTS.practice, maxRetries: 1 }),
+    expect.objectContaining({ timeout: KIMI_REQUEST_TIMEOUTS.feedback, maxRetries: 1 }),
+  ]);
+});
+
+test("KimiProvider rejects invalid structured feedback so routes can fall back", async () => {
+  const { client } = createFakeClient(["not valid JSON", "still not valid JSON"]);
+  const provider = new KimiProvider(client);
+  await expect(failureReason(provider.generateFeedback(context, messages))).resolves.toBe("invalid_json");
+});
+
+test("KimiProvider retries one invalid feedback response before falling back", async () => {
+  const expectedReport = getMockFeedback(context, messages);
+  const { client, requests } = createFakeClient(["not valid JSON", JSON.stringify(expectedReport)]);
+  const provider = new KimiProvider(client);
+
+  await expect(provider.generateFeedback(context, messages)).resolves.toEqual(expectedReport);
+  expect(requests).toHaveLength(2);
+  expect(requests[1]).toMatchObject({
     messages: [
-      { role: "system", content: expect.stringContaining("natural spoken English") },
-      { role: "user", content: expect.stringContaining("我们可以一起看看") },
+      { role: "system", content: expect.any(String) },
+      { role: "user", content: expect.stringContaining("This is a retry after an invalid response") },
     ],
   });
 });
 
-test("KimiProvider rejects invalid structured feedback so routes can fall back", async () => {
-  const { client } = createFakeClient(["not valid JSON"]);
+test("KimiProvider rejects invalid structured context guidance so routes can fall back", async () => {
+  const invalidGuidance = JSON.stringify({ campus_context: "Missing the other fields" });
+  const { client } = createFakeClient([invalidGuidance, invalidGuidance]);
   const provider = new KimiProvider(client);
-  await expect(provider.generateFeedback(context, messages)).rejects.toThrow();
+  await expect(failureReason(provider.generateContextGuidance(context))).resolves.toBe("invalid_schema");
 });
 
-test("KimiProvider rejects invalid structured context guidance so routes can fall back", async () => {
-  const { client } = createFakeClient([JSON.stringify({ campus_context: "Missing the other fields" })]);
+test("KimiProvider retries one invalid context response before falling back", async () => {
+  const expectedGuidance = getMockContextGuidance(context);
+  const { client, requests } = createFakeClient(["not valid JSON", JSON.stringify(expectedGuidance)]);
   const provider = new KimiProvider(client);
-  await expect(provider.generateContextGuidance(context)).rejects.toThrow();
+
+  await expect(provider.generateContextGuidance(context)).resolves.toEqual(expectedGuidance);
+  expect(requests).toHaveLength(2);
+  expect(requests[1]).toMatchObject({
+    messages: [
+      { role: "system", content: expect.any(String) },
+      { role: "user", content: expect.stringContaining("This is a retry after an invalid response") },
+    ],
+  });
 });
 
 test("KimiProvider rejects context guidance that changes the literal source", async () => {
@@ -173,13 +200,62 @@ test("KimiProvider rejects context guidance that changes the literal source", as
     ...getMockContextGuidance(context),
     literal_source: "The professor gave different feedback.",
   };
-  const { client } = createFakeClient([JSON.stringify(guidance)]);
+  const encodedGuidance = JSON.stringify(guidance);
+  const { client } = createFakeClient([encodedGuidance, encodedGuidance]);
   const provider = new KimiProvider(client);
-  await expect(provider.generateContextGuidance(context)).rejects.toThrow("not grounded in the submitted source");
+  await expect(failureReason(provider.generateContextGuidance(context))).resolves.toBe("grounding_failed");
 });
 
-test("KimiProvider rejects a conversion that still contains Chinese", async () => {
-  const { client } = createFakeClient(["我们可以一起看看 feedback 吗？"]);
-  const provider = new KimiProvider(client);
-  await expect(provider.translateToNaturalEnglish("我们可以一起看看反馈吗？")).rejects.toThrow();
+test("KimiProvider classifies truncated and ungrounded feedback for safe fallback", async () => {
+  const expectedReport = getMockFeedback(context, messages);
+  const truncated = createFakeClient([JSON.stringify(expectedReport), JSON.stringify(expectedReport)], ["length", "length"]);
+  const ungroundedReport = JSON.stringify({
+    ...expectedReport,
+    improvements: expectedReport.improvements.map((improvement) => ({
+      ...improvement,
+      original_response: "This sentence was never submitted by the student.",
+    })),
+  });
+  const ungrounded = createFakeClient([ungroundedReport, ungroundedReport]);
+
+  await expect(failureReason(new KimiProvider(truncated.client).generateFeedback(context, messages))).resolves.toBe("truncated");
+  await expect(failureReason(new KimiProvider(ungrounded.client).generateFeedback(context, messages))).resolves.toBe("grounding_failed");
+});
+
+test("classifies provider failures without logging student content", () => {
+  expect(classifyAiFailure({ name: "APIConnectionTimeoutError" })).toBe("timeout");
+  expect(classifyAiFailure({ status: 401 })).toBe("authentication");
+  expect(classifyAiFailure({ status: 429 })).toBe("rate_limit");
+  expect(classifyAiFailure({ status: 503 })).toBe("upstream_error");
+
+  const studentText = "PRIVATE STUDENT TRANSCRIPT";
+  const output: string[] = [];
+  const originalWarn = console.warn;
+  console.warn = (...values: unknown[]) => output.push(values.join(" "));
+  try {
+    logAiFallback({
+      operation: "feedback",
+      model: "kimi-k3",
+      error: new Error(studentText),
+      elapsedMs: 20_003.4,
+    });
+    logAiRetry({
+      operation: "feedback",
+      model: "kimi-k2.6",
+      error: new Error(studentText),
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  expect(output).toHaveLength(2);
+  expect(output[0]).toContain('"event":"ai_fallback"');
+  expect(output[0]).toContain('"reason":"unknown"');
+  expect(output[1]).toContain('"event":"ai_retry"');
+  expect(output.join(" ")).not.toContain(studentText);
+});
+
+test("uses explicit safe failure reasons", () => {
+  expect(classifyAiFailure(new AiProviderFailure("empty_response"))).toBe("empty_response");
+  expect(classifyAiFailure(new AiProviderFailure("invalid_schema"))).toBe("invalid_schema");
 });

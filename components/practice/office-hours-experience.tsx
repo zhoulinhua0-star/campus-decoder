@@ -16,7 +16,6 @@ const emptyContext: PracticeContext = {
   whatHappened: "",
   concern: "",
   professorFeedback: "",
-  preferredLanguage: "English",
 };
 
 const sampleContext: PracticeContext = {
@@ -25,19 +24,9 @@ const sampleContext: PracticeContext = {
   whatHappened: "I received a C+ on my first essay. The grade was lower than I expected, and I want to understand what to work on next.",
   concern: "I worry that going to office hours will sound like I am arguing about the grade or wasting the professor’s time.",
   professorFeedback: "The thesis is too broad, and the analysis needs to connect more clearly to the evidence.",
-  preferredLanguage: "English",
 };
 
 function getGeneralContextGuidance(context: PracticeContext): ContextGuidance {
-  if (context.preferredLanguage === "简体中文") {
-    return {
-      literal_source: "你希望通过 Office Hours 更好地理解当前情况，并确定一个可行的下一步。",
-      campus_context: "Office Hours 通常可以用来澄清课程内容、作业反馈和改进方向。提出具体问题通常体现主动性。",
-      uncertainty: "目前无法载入针对你所填内容的解释，因此这里不会推测教授的个人意图或具体要求。",
-      constructive_next_move: `带上相关材料，说明你的目标：“${context.goal}”，然后从一个具体问题开始。`,
-    };
-  }
-
   return {
     literal_source: "You want to use office hours to understand the situation and identify a workable next step.",
     campus_context: "Office hours are commonly used to clarify course material, assignment feedback, and possible ways to improve. A specific question usually signals initiative.",
@@ -111,9 +100,7 @@ export function OfficeHoursExperience() {
     } catch {
       setContextGuidance(getGeneralContextGuidance(context));
       setContextMode(null);
-      setContextNotice(context.preferredLanguage === "简体中文"
-        ? "针对你所填内容的指导暂时无法载入，因此这里显示通用的 Office Hours 指导。"
-        : "Situation-specific guidance could not load, so general Office Hours guidance is shown.");
+      setContextNotice("Situation-specific guidance could not load, so general Office Hours guidance is shown.");
     } finally {
       setIsDecoding(false);
     }
@@ -202,8 +189,8 @@ export function OfficeHoursExperience() {
         {stage === "Setup" ? <SetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={decodeContext} onSelectContextSource={selectContextSource} /> : null}
         {stage === "Context" ? <ContextStage context={context} guidance={contextGuidance} isLoading={isDecoding} mode={contextMode} notice={contextNotice} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}
         {stage === "Practice" ? <PracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}
-        {stage === "Feedback" && report && feedbackMode ? <FeedbackStage language={context.preferredLanguage} mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
-        {stage === "Action" && report && feedbackMode ? <ActionStage language={context.preferredLanguage} mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}
+        {stage === "Feedback" && report && feedbackMode ? <FeedbackStage mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}
+        {stage === "Action" && report && feedbackMode ? <ActionStage mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}
       </div>
     </>
   );
