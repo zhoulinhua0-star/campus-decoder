@@ -21,11 +21,7 @@ export default function PracticePage() {
         <div className="mt-12 grid gap-5 md:grid-cols-3">
           <ScenarioCard active description="Prepare to discuss feedback, ask useful questions, and show initiative without feeling confrontational." outcome="A first conversation after a lower grade" title="Office Hours" type="office" />
           <ScenarioCard active description="Turn a vague, overly formal, or apologetic draft into a clear and respectful professor email." outcome="Tone, specificity, and a clear ask" title="Emailing a Professor" type="email" />
-          <ScenarioCard description="Practice following up on missed work, proposing task division, and handling disagreement with peers." outcome="Direct but constructive collaboration" title="Group Project Conflict" type="group" />
-        </div>
-
-        <div className="mx-auto mt-8 max-w-[760px] rounded-2xl border border-[#ead8bc] bg-[#fff8eb] px-5 py-4 text-center text-sm font-semibold leading-6 text-[#79502c]">
-          Group Project Conflict is next in development. Office Hours and Emailing a Professor are ready now.
+          <ScenarioCard active description="Practice following up on missed work, proposing task division, and handling disagreement with peers." outcome="Direct but constructive collaboration" title="Group Project Conflict" type="group" />
         </div>
       </section>
     </main>

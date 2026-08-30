@@ -69,12 +69,12 @@ export default function Home() {
           <ScrollReveal className="max-w-[680px]">
             <span className="eyebrow">Choose a real moment</span>
             <h2 className="font-display mt-5 text-4xl font-bold leading-tight text-[#0b2e2a] sm:text-5xl">Practice university life before it happens.</h2>
-            <p className="mt-5 text-lg leading-8 text-[#59706e]">Start with one moment that feels hard today. Office Hours and Emailing a Professor are ready for the full guided experience.</p>
+            <p className="mt-5 text-lg leading-8 text-[#59706e]">Start with one moment that feels hard today. All three scenarios are ready for the full guided experience.</p>
           </ScrollReveal>
           <ScrollReveal className="mt-12 grid gap-5 md:grid-cols-3" delay={80} stagger>
             <ScenarioCard active description="Prepare to discuss feedback, ask useful questions, and show initiative without feeling confrontational." outcome="A first conversation after a lower grade" title="Office Hours" type="office" />
             <ScenarioCard active description="Turn a vague, overly formal, or apologetic draft into a clear and respectful professor email." outcome="Tone, specificity, and a clear ask" title="Emailing a Professor" type="email" />
-            <ScenarioCard description="Practice following up on missed work, proposing task division, and handling disagreement with peers." outcome="Direct but constructive collaboration" title="Group Project Conflict" type="group" />
+            <ScenarioCard active description="Practice following up on missed work, proposing task division, and handling disagreement with peers." outcome="Direct but constructive collaboration" title="Group Project Conflict" type="group" />
           </ScrollReveal>
         </div>
       </section>

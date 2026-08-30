@@ -64,6 +64,10 @@ test("keeps landing and setup responsive with large interaction targets", async 
   await page.goto("/practice/email-professor");
   await expectNoHorizontalOverflow(page);
   await expectLargeEnoughTargets(page);
+
+  await page.goto("/practice/group-project");
+  await expectNoHorizontalOverflow(page);
+  await expectLargeEnoughTargets(page);
 });
 
 test("wraps long personal context through the practice stage", async ({ page }) => {
@@ -83,6 +87,28 @@ test("wraps long personal context through the practice stage", async ({ page }) 
   await expectNoHorizontalOverflow(page);
   await page.getByRole("button", { name: "Start the role-play" }).click();
   await expect(page.getByRole("heading", { name: "Practice Professor" })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+});
+
+test("wraps long group-project context through teammate practice", async ({ page }) => {
+  const longCourse = `PROJECT_${"C".repeat(110)}`;
+  const longRole = `COORDINATOR_${"R".repeat(275)}`;
+  const longSituation = `SITUATION_${"S".repeat(1150)}`;
+  const longConflict = `CONFLICT_${"F".repeat(1500)}`;
+  const longGoal = `RESOLVE_${"G".repeat(470)}`;
+
+  await page.goto("/practice/group-project");
+  await page.getByLabel("Course or project").fill(longCourse);
+  await page.getByLabel("Your role or responsibility").fill(longRole);
+  await page.getByLabel("What is the project situation?").fill(longSituation);
+  await page.getByLabel(/What conflict or coordination problem happened/).fill(longConflict);
+  await page.getByLabel("What should the conversation accomplish?").fill(longGoal);
+  await page.getByRole("button", { name: "See group guidance" }).click();
+
+  await expect(page.getByText(longConflict, { exact: false })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  await page.getByRole("button", { name: "Start teammate practice" }).click();
+  await expect(page.getByRole("heading", { name: "Practice Teammate" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 });
 
@@ -187,5 +213,29 @@ test("keeps the email journey accessible through all five stages", async ({ page
 
   await page.getByRole("button", { name: "Open final email" }).click();
   await expect(page.getByRole("heading", { name: "Review your editable email before you use it." })).toBeVisible();
+  await expectAccessible(page);
+});
+
+test("keeps the group-project journey accessible through all five stages", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chromium");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/practice/group-project");
+  await expectAccessible(page);
+  await page.getByRole("button", { name: /Try the sample project/ }).click();
+  await page.getByRole("button", { name: "See group guidance" }).click();
+  await expect(page.getByRole("heading", { name: "Separate the work problem from the story about the person." })).toBeVisible();
+  await expectAccessible(page);
+  await page.getByRole("button", { name: "Start teammate practice" }).click();
+  await expect(page.getByRole("heading", { name: "Practice Teammate" })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByLabel("Your response to the group member").fill("The research section is late. Could we agree on an owner and a Tuesday deadline? I can combine the slides.");
+  await page.getByRole("button", { name: "Send response" }).click();
+  await page.getByRole("button", { name: "Finish & see feedback" }).click();
+  await expect(page.getByRole("heading", { name: "Here is how your group conversation will be reviewed." })).toBeVisible();
+  await expectAccessible(page);
+
+  await page.getByRole("button", { name: "Build my action kit" }).click();
+  await expect(page.getByRole("heading", { name: "Adapt these three artifacts to the agreement you actually reach." })).toBeVisible();
   await expectAccessible(page);
 });

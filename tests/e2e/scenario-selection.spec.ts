@@ -23,6 +23,5 @@ test("routes neutral practice entry points through an equal scenario chooser", a
 
   await expect(page.getByRole("link", { name: /Office Hours/ })).toHaveAttribute("href", "/practice/office-hours");
   await expect(page.getByRole("link", { name: /Emailing a Professor/ })).toHaveAttribute("href", "/practice/email-professor");
-  await expect(page.getByRole("link", { name: /Group Project Conflict/ })).toHaveCount(0);
-  await expect(page.getByText("Group Project Conflict is next in development.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Group Project Conflict/ })).toHaveAttribute("href", "/practice/group-project");
 });

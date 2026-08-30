@@ -4,11 +4,15 @@ import type { ZodType } from "zod";
 import { getMockEmailContextGuidance, getMockEmailFeedback, getMockEmailHint } from "@/lib/ai/email-mock";
 import { buildEmailFeedbackInput, buildEmailGuidanceInput, buildEmailHintInput, EMAIL_CONTEXT_PROMPT, EMAIL_FEEDBACK_PROMPT, EMAIL_HINT_PROMPT } from "@/lib/ai/email-prompts";
 import { emailContextGuidanceSchema, emailFeedbackReportSchema, emailHintSchema } from "@/lib/ai/email-schemas";
+import { getMockGroupContextGuidance, getMockGroupFeedback, getMockTeammateReply } from "@/lib/ai/group-mock";
+import { buildGroupContext, buildGroupContextGuidanceInput, buildGroupFeedbackInput, GROUP_CONTEXT_PROMPT, GROUP_FEEDBACK_PROMPT, GROUP_ROLEPLAY_PROMPT } from "@/lib/ai/group-prompts";
+import { groupContextGuidanceSchema, groupFeedbackReportSchema } from "@/lib/ai/group-schemas";
 import { getMockContextGuidance, getMockFeedback, getMockProfessorReply } from "@/lib/ai/mock";
 import { buildContextGuidanceInput, buildContextPrompt, buildFeedbackInput, OFFICE_HOURS_CONTEXT_PROMPT, OFFICE_HOURS_FEEDBACK_PROMPT, OFFICE_HOURS_ROLEPLAY_PROMPT } from "@/lib/ai/prompts";
 import { contextGuidanceSchema, feedbackReportSchema } from "@/lib/ai/schemas";
 import { AiProviderFailure, type AiOperation, logAiRetry } from "@/lib/ai/telemetry";
 import type { EmailContextGuidance, EmailFeedbackReport, EmailHint, EmailPracticeContext } from "@/types/email-practice";
+import type { GroupContextGuidance, GroupFeedbackReport, GroupPracticeContext, GroupPracticeMessage } from "@/types/group-practice";
 import type { ContextGuidance, FeedbackReport, PracticeContext, PracticeMessage } from "@/types/practice";
 
 type KimiModels = Record<AiOperation, string>;
@@ -72,6 +76,9 @@ export interface AiProvider {
   generateEmailContextGuidance(context: EmailPracticeContext): Promise<EmailContextGuidance>;
   generateEmailHint(context: EmailPracticeContext, draft: string): Promise<EmailHint>;
   generateEmailFeedback(context: EmailPracticeContext, revisedDraft: string): Promise<EmailFeedbackReport>;
+  generateGroupContextGuidance(context: GroupPracticeContext): Promise<GroupContextGuidance>;
+  generateTeammateReply(context: GroupPracticeContext, messages: GroupPracticeMessage[]): Promise<string>;
+  generateGroupFeedback(context: GroupPracticeContext, messages: GroupPracticeMessage[]): Promise<GroupFeedbackReport>;
 }
 
 export class DemoProvider implements AiProvider {
@@ -103,6 +110,18 @@ export class DemoProvider implements AiProvider {
 
   async generateEmailFeedback(context: EmailPracticeContext, revisedDraft: string) {
     return getMockEmailFeedback(context, revisedDraft);
+  }
+
+  async generateGroupContextGuidance(context: GroupPracticeContext) {
+    return getMockGroupContextGuidance(context);
+  }
+
+  async generateTeammateReply(_context: GroupPracticeContext, messages: GroupPracticeMessage[]) {
+    return getMockTeammateReply(messages);
+  }
+
+  async generateGroupFeedback(context: GroupPracticeContext, messages: GroupPracticeMessage[]) {
+    return getMockGroupFeedback(context, messages);
   }
 
 }
@@ -301,6 +320,89 @@ export class KimiProvider implements AiProvider {
     if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
     const report = parseStructuredOutput(completion.choices[0]?.message.content, emailFeedbackReportSchema);
     if (report.improvements.some((improvement) => !revisedDraft.includes(improvement.original_excerpt))) {
+      throw new AiProviderFailure("grounding_failed");
+    }
+    return report;
+  }
+
+  async generateGroupContextGuidance(context: GroupPracticeContext) {
+    try {
+      return await this.requestGroupContextGuidance(context, false);
+    } catch (error) {
+      if (!shouldRetryStructuredFailure(error)) throw error;
+      logAiRetry({ operation: "context", model: this.modelFor("context"), error });
+      return this.requestGroupContextGuidance(context, true);
+    }
+  }
+
+  private async requestGroupContextGuidance(context: GroupPracticeContext, retry: boolean) {
+    const model = this.modelFor("context");
+    const completion = await this.client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: GROUP_CONTEXT_PROMPT },
+        {
+          role: "user",
+          content: `${buildGroupContextGuidanceInput(context)}${retry ? "\nThis is a retry after an invalid response. Return only the exact six-field JSON object and preserve the entire conflict description verbatim." : ""}`,
+        },
+      ],
+      response_format: zodResponseFormat(groupContextGuidanceSchema, "group_context_guidance"),
+      ...getKimiModelSettings(model),
+    }, { timeout: KIMI_REQUEST_TIMEOUTS.context, maxRetries: 1 });
+
+    if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
+    const guidance = parseStructuredOutput(completion.choices[0]?.message.content, groupContextGuidanceSchema);
+    if (!guidance.literal_source.includes(context.conflict.trim())) throw new AiProviderFailure("grounding_failed");
+    return guidance;
+  }
+
+  async generateTeammateReply(context: GroupPracticeContext, messages: GroupPracticeMessage[]) {
+    const model = this.modelFor("practice");
+    const completion = await this.client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: GROUP_ROLEPLAY_PROMPT },
+        { role: "user", content: buildGroupContext(context) },
+        ...messages.map((message) => ({ role: message.role, content: message.content })),
+      ],
+      ...getKimiModelSettings(model),
+    }, { timeout: KIMI_REQUEST_TIMEOUTS.practice, maxRetries: 1 });
+
+    if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
+    const teammateReply = completion.choices[0]?.message.content?.trim();
+    if (!teammateReply) throw new AiProviderFailure("empty_response");
+    return teammateReply;
+  }
+
+  async generateGroupFeedback(context: GroupPracticeContext, messages: GroupPracticeMessage[]) {
+    try {
+      return await this.requestGroupFeedback(context, messages, false);
+    } catch (error) {
+      if (!shouldRetryStructuredFailure(error)) throw error;
+      logAiRetry({ operation: "feedback", model: this.modelFor("feedback"), error });
+      return this.requestGroupFeedback(context, messages, true);
+    }
+  }
+
+  private async requestGroupFeedback(context: GroupPracticeContext, messages: GroupPracticeMessage[], retry: boolean) {
+    const model = this.modelFor("feedback");
+    const completion = await this.client.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: GROUP_FEEDBACK_PROMPT },
+        {
+          role: "user",
+          content: `${buildGroupFeedbackInput(context, messages)}${retry ? "\nThis is a retry after an invalid response. Follow the exact JSON fields, types, counts, and verbatim transcript-grounding requirements." : ""}`,
+        },
+      ],
+      response_format: zodResponseFormat(groupFeedbackReportSchema, "group_project_feedback"),
+      ...getKimiModelSettings(model),
+    }, { timeout: KIMI_REQUEST_TIMEOUTS.feedback, maxRetries: 1 });
+
+    if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
+    const report = parseStructuredOutput(completion.choices[0]?.message.content, groupFeedbackReportSchema);
+    const studentResponses = messages.filter((message) => message.role === "user").map((message) => message.content);
+    if (report.improvements.some((improvement) => !studentResponses.some((response) => response.includes(improvement.original_response)))) {
       throw new AiProviderFailure("grounding_failed");
     }
     return report;

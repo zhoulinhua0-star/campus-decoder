@@ -2,13 +2,16 @@ import { expect, test } from "@playwright/test";
 import type OpenAI from "openai";
 import { POST as createContextGuidance } from "@/app/api/context/route";
 import { POST as createEmailFeedback } from "@/app/api/email/feedback/route";
+import { POST as createGroupFeedback } from "@/app/api/group/feedback/route";
 import { DEMO_OPENING } from "@/lib/ai/constants";
 import { getMockEmailContextGuidance, getMockEmailFeedback, getMockEmailHint } from "@/lib/ai/email-mock";
+import { getMockGroupContextGuidance, getMockGroupFeedback, getMockTeammateReply } from "@/lib/ai/group-mock";
 import { getMockContextGuidance, getMockFeedback } from "@/lib/ai/mock";
 import { DemoProvider, getAiProvider, KIMI_REQUEST_TIMEOUTS, KimiProvider } from "@/lib/ai/providers";
 import { AiProviderFailure, classifyAiFailure, logAiFallback, logAiRetry } from "@/lib/ai/telemetry";
 import type { PracticeContext, PracticeMessage } from "@/types/practice";
 import type { EmailPracticeContext } from "@/types/email-practice";
+import type { GroupPracticeContext } from "@/types/group-practice";
 
 const context: PracticeContext = {
   course: "First-Year Writing Seminar",
@@ -33,6 +36,20 @@ const emailContext: EmailPracticeContext = {
 };
 
 const revisedEmail = "Dear Professor Morgan,\n\nI have narrowed my topic to two questions. Could we meet briefly to discuss which one is focused enough?\n\nBest,\n[Your name]";
+
+const groupContext: GroupPracticeContext = {
+  course: "Marketing presentation",
+  role: "Research coordinator",
+  projectSituation: "The group presents next week and needs to combine slides on Tuesday.",
+  conflict: "One research section is late and the owner has not replied to two messages.",
+  goal: "Agree on a fair task split and new deadline",
+  concern: "I worry that being direct will sound controlling.",
+};
+
+const groupMessages = [
+  { role: "assistant" as const, content: "What should the group resolve first?" },
+  { role: "user" as const, content: "The research section is late. Could we agree on an owner and a Tuesday deadline? I can combine the final slides." },
+];
 
 function createFakeClient(contents: string[], finishReasons: string[] = []) {
   const requests: unknown[] = [];
@@ -127,6 +144,49 @@ test("email feedback route rejects an unchanged draft", async () => {
 
   expect(response.status).toBe(400);
   await expect(response.json()).resolves.toEqual({ error: "Revise the draft before requesting feedback." });
+});
+
+test("DemoProvider grounds the complete group-project journey", async () => {
+  const provider = new DemoProvider();
+  const guidance = await provider.generateGroupContextGuidance(groupContext);
+  const opening = await provider.generateTeammateReply(groupContext, []);
+  const report = await provider.generateGroupFeedback(groupContext, groupMessages);
+
+  expect(guidance.literal_source).toContain(groupContext.conflict);
+  expect(opening).toBe(getMockTeammateReply([]));
+  expect(report.improvements.every((item) => groupMessages[1].content.includes(item.original_response))).toBe(true);
+  expect(report.task_division.some((item) => item.owner === "You")).toBe(true);
+  expect(report.follow_up_message).toContain("Please reply if I missed or misunderstood anything");
+});
+
+test("group feedback route rejects a transcript without a student response", async () => {
+  const response = await createGroupFeedback(new Request("http://localhost/api/group/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ context: groupContext, messages: [{ role: "assistant", content: "What should we resolve?" }, { role: "assistant", content: "Can you clarify?" }] }),
+  }));
+
+  expect(response.status).toBe(400);
+  await expect(response.json()).resolves.toEqual({ error: "There is not enough practice content to create feedback." });
+});
+
+test("KimiProvider validates grounded group context, role-play, and feedback", async () => {
+  const expectedGuidance = getMockGroupContextGuidance(groupContext);
+  const expectedReport = getMockGroupFeedback(groupContext, groupMessages);
+  const { client, requests } = createFakeClient([
+    JSON.stringify(expectedGuidance),
+    "I hear the deadline is the main concern. What task split do you propose?",
+    JSON.stringify(expectedReport),
+  ]);
+  const provider = new KimiProvider(client);
+
+  await expect(provider.generateGroupContextGuidance(groupContext)).resolves.toEqual(expectedGuidance);
+  await expect(provider.generateTeammateReply(groupContext, groupMessages)).resolves.toContain("What task split");
+  await expect(provider.generateGroupFeedback(groupContext, groupMessages)).resolves.toEqual(expectedReport);
+  expect(requests).toHaveLength(3);
+  expect(requests[0]).toMatchObject({ response_format: { type: "json_schema" } });
+  expect(requests[1]).toMatchObject({ messages: expect.arrayContaining([{ role: "system", content: expect.stringContaining("Stay in the teammate role") }]) });
+  expect(requests[2]).toMatchObject({ messages: expect.arrayContaining([{ role: "system", content: expect.stringContaining("verbatim contiguous excerpt") }]) });
 });
 
 test("KimiProvider validates grounded email context, hints, and feedback", async () => {
