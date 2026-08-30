@@ -18,7 +18,7 @@
   <code>Works without an API key</code>
 </p>
 
-> **Repository status:** three complete five-stage journeys—**Office Hours**, **Emailing a Professor**, and **Group Project Conflict**—behind one neutral scenario chooser. Every journey works without an API key through the honest Demo fallback. The linked Cloudflare deployment may lag behind the latest code in `main`.
+> **Current release:** three complete five-stage journeys—**Office Hours**, **Emailing a Professor**, and **Group Project Conflict**—behind one neutral scenario chooser. Every journey works without an API key through the honest Demo fallback, and the current Cloudflare deployment includes all three.
 
 ## Choose a campus moment
 
@@ -201,7 +201,7 @@ The current suite reports **50 passing checks** across five Playwright projects,
 
 Current production demo: **[campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
 
-The repository now contains all three complete journeys. The production link is kept as a useful demo reference, but deployment is a separate step and may not yet include the latest Group Project Conflict work.
+The production Worker currently contains all three complete journeys. Post-deployment smoke checks returned HTTP 200 for every public page, `mode: live` for Office Hours and Email Context, and `mode: live` with complete structured fields for Group Context, Practice, and Feedback.
 
 ```bash
 npm run preview:cloudflare
