@@ -8,7 +8,11 @@
 </p>
 
 <p align="center">
-  <a href="https://campus-decoder.zhoulinhua0.workers.dev"><strong>Access the Live Website here</strong></a>
+  <a href="https://campus-decoder.zhoulinhua0.workers.dev"><strong>Try the live demo</strong></a>
+  ·
+  <a href="#three-journeys-one-learning-loop">Explore the journeys</a>
+  ·
+  <a href="#run-locally">Run locally</a>
 </p>
 
 <p align="center">
@@ -18,11 +22,11 @@
   <code>Works without an API key</code>
 </p>
 
-> **Current release:** three complete five-stage journeys—**Office Hours**, **Emailing a Professor**, and **Group Project Conflict**—behind one neutral scenario chooser. Every journey works without an API key through the honest Demo fallback, and the current Cloudflare deployment includes all three.
+> **Current release:** three complete five-stage journeys—**Office Hours**, **Emailing a Professor**, and **Group Project Conflict**—are live on Cloudflare Workers. Production uses Kimi K2.6 behind a provider-neutral server boundary, while the honest Demo fallback keeps every journey usable without an API key.
 
 ## Choose a campus moment
 
-Run the current repository, open **[localhost:3000/practice](http://localhost:3000/practice)**, and choose one scenario:
+Open the **[live scenario chooser](https://campus-decoder.zhoulinhua0.workers.dev/practice)** and pick the campus moment you want to handle differently. No account or setup is required.
 
 | Scenario | What the student practices | Repository status |
 | --- | --- | --- |
@@ -38,7 +42,9 @@ The chooser gives all three complete scenarios the same visual hierarchy.
 | --- | --- |
 | Complete journeys | Three, each using Setup → Context → Practice → Feedback → Action |
 | Provider contracts | Demo and Kimi paths cover all three scenarios with Zod validation, transcript grounding, retries, and safe fallback |
-| Automated regression | **50 passing checks**, 20 intentional project-specific skips, 0 failures |
+| Automated regression | **53 passing checks**, 20 intentional project-specific skips, 0 failures |
+| Funded live evaluation | **9/9 Kimi runs passed**: three complete runs for each scenario |
+| Production smoke | Five public pages and all nine API routes returned HTTP 200; every API response remained in live mode with complete English output |
 | Responsive coverage | 375px portrait, mobile landscape, 768px tablet, and 1440px desktop |
 | Browser engines | Chromium plus desktop WebKit as a Safari-engine approximation |
 | Accessibility | Five-stage axe WCAG 2 A/AA scans, skip navigation, keyboard focus, 44px targets, and reduced-motion checks |
@@ -201,7 +207,7 @@ The current suite reports **53 passing checks** across five Playwright projects,
 
 Current production demo: **[campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
 
-The production Worker currently contains all three complete journeys. Post-deployment smoke checks returned HTTP 200 for every public page, `mode: live` for Office Hours and Email Context, and `mode: live` with complete structured fields for Group Context, Practice, and Feedback.
+The production Worker contains all three complete journeys. Post-deployment smoke checks returned HTTP 200 for the homepage, scenario chooser, and all three journey pages. All nine API routes returned `mode: live`, complete English output, and the expected structured fields without using Demo fallback.
 
 ```bash
 npm run preview:cloudflare
@@ -266,11 +272,11 @@ types/
 
 ## Next priorities
 
-1. Run hands-on Emailing a Professor and Group Project Conflict QA in live Kimi mode and review coaching quality on the actual demo devices.
-2. Validate all three complete journeys with Chinese and other international students new to U.S. university culture.
-3. Test English dictation on the real Chrome and Safari devices planned for the demo.
-4. Capture updated production screenshots and record the under-five-minute demo video.
-5. Deploy the latest three-scenario repository state to Cloudflare after live-provider and demo-device checks pass.
+1. Run hands-on live-Kimi QA for all three journeys on the actual demo devices.
+2. Test English dictation, permission denial, restart behavior, and long speech in real Chrome and Safari.
+3. Validate the complete learning loop with Chinese and other international students new to U.S. university culture.
+4. Monitor production latency, retry reasons, and fallback frequency; one funded Group Feedback run reached 40.2 seconds against the 45-second timeout.
+5. Capture 3–5 production screenshots, record the under-five-minute demo video, and complete the Devpost submission package.
 
 ## Safety
 
