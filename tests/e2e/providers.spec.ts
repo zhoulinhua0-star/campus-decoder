@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import type OpenAI from "openai";
 import { POST as createContextGuidance } from "@/app/api/context/route";
 import { POST as createEmailFeedback } from "@/app/api/email/feedback/route";
+import { POST as createGroupContextGuidance } from "@/app/api/group/context/route";
 import { POST as createGroupFeedback } from "@/app/api/group/feedback/route";
 import { DEMO_OPENING } from "@/lib/ai/constants";
 import { getMockEmailContextGuidance, getMockEmailFeedback, getMockEmailHint } from "@/lib/ai/email-mock";
@@ -313,6 +314,103 @@ test("KimiProvider retries one invalid context response before falling back", as
   });
 });
 
+test("KimiProvider retries non-English coaching while preserving the student's literal source", async () => {
+  const contextWithChineseSource = {
+    ...groupContext,
+    conflict: "One research section is late. 学生原文需要保留。",
+  };
+  const expectedGuidance = getMockGroupContextGuidance(contextWithChineseSource);
+  const nonEnglishGuidance = {
+    ...expectedGuidance,
+    task_division_context: "请明确每项任务的负责人和截止时间。",
+  };
+  const { client, requests } = createFakeClient([
+    JSON.stringify(nonEnglishGuidance),
+    JSON.stringify(expectedGuidance),
+  ]);
+  const provider = new KimiProvider(client);
+
+  await expect(provider.generateGroupContextGuidance(contextWithChineseSource)).resolves.toEqual(expectedGuidance);
+  expect(requests).toHaveLength(2);
+  expect(requests[1]).toMatchObject({
+    messages: [
+      { role: "system", content: expect.any(String) },
+      { role: "user", content: expect.stringContaining("This is a retry after an invalid response") },
+    ],
+  });
+});
+
+test("KimiProvider retries a non-English role-play reply once", async () => {
+  const { client, requests } = createFakeClient([
+    "我们先明确最需要解决的问题。",
+    "What should we resolve first so the group can move forward?",
+  ]);
+  const provider = new KimiProvider(client);
+
+  await expect(provider.generateTeammateReply(groupContext, [])).resolves.toContain("What should we resolve first");
+  expect(requests).toHaveLength(2);
+  expect(requests[1]).toMatchObject({
+    messages: expect.arrayContaining([
+      { role: "system", content: expect.stringContaining("previous response used a non-English script") },
+    ]),
+  });
+});
+
+test("group context route falls back after two non-English live responses", async () => {
+  const previousProvider = process.env.AI_PROVIDER;
+  const previousKey = process.env.MOONSHOT_API_KEY;
+  const originalFetch = globalThis.fetch;
+  const output: string[] = [];
+  const originalWarn = console.warn;
+  let requests = 0;
+  const nonEnglishGuidance = JSON.stringify({
+    ...getMockGroupContextGuidance(groupContext),
+    task_division_context: "请明确每项任务的负责人和截止时间。",
+  });
+
+  process.env.AI_PROVIDER = "kimi";
+  process.env.MOONSHOT_API_KEY = "test-key";
+  globalThis.fetch = (async () => {
+    requests += 1;
+    return new Response(JSON.stringify({
+      id: `test-${requests}`,
+      object: "chat.completion",
+      created: 0,
+      model: "kimi-k2.6",
+      choices: [{ index: 0, finish_reason: "stop", message: { role: "assistant", content: nonEnglishGuidance } }],
+      usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }) as typeof fetch;
+  console.warn = (...values: unknown[]) => output.push(values.join(" "));
+
+  try {
+    const response = await createGroupContextGuidance(new Request("http://localhost/api/group/context", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ context: groupContext }),
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.mode).toBe("demo");
+    expect(body.guidance).toEqual(getMockGroupContextGuidance(groupContext));
+    expect(requests).toBe(2);
+    expect(output).toEqual([
+      expect.stringContaining('"event":"ai_retry"'),
+      expect.stringContaining('"event":"ai_fallback"'),
+    ]);
+    expect(output.join(" ")).toContain('"reason":"invalid_language"');
+    expect(output.join(" ")).not.toContain(nonEnglishGuidance);
+  } finally {
+    console.warn = originalWarn;
+    globalThis.fetch = originalFetch;
+    if (previousProvider === undefined) delete process.env.AI_PROVIDER;
+    else process.env.AI_PROVIDER = previousProvider;
+    if (previousKey === undefined) delete process.env.MOONSHOT_API_KEY;
+    else process.env.MOONSHOT_API_KEY = previousKey;
+  }
+});
+
 test("KimiProvider rejects context guidance that changes the literal source", async () => {
   const guidance = {
     ...getMockContextGuidance(context),
@@ -376,4 +474,5 @@ test("classifies provider failures without logging student content", () => {
 test("uses explicit safe failure reasons", () => {
   expect(classifyAiFailure(new AiProviderFailure("empty_response"))).toBe("empty_response");
   expect(classifyAiFailure(new AiProviderFailure("invalid_schema"))).toBe("invalid_schema");
+  expect(classifyAiFailure(new AiProviderFailure("invalid_language"))).toBe("invalid_language");
 });

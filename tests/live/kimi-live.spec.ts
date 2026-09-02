@@ -1,8 +1,12 @@
 import { expect, test } from "@playwright/test";
 import { getAiProvider } from "@/lib/ai/providers";
+import type { EmailPracticeContext } from "@/types/email-practice";
+import type { GroupPracticeContext, GroupPracticeMessage } from "@/types/group-practice";
 import type { PracticeContext, PracticeMessage } from "@/types/practice";
 
-const englishContext: PracticeContext = {
+const LIVE_RUNS = [1, 2, 3] as const;
+
+const officeHoursContext: PracticeContext = {
   course: "First-Year Writing Seminar",
   goal: "Understand why my evidence does not support my thesis and choose one revision step",
   whatHappened: "My first essay received a lower grade than I expected, and I am unsure how to revise it.",
@@ -10,10 +14,32 @@ const englishContext: PracticeContext = {
   professorFeedback: "Your thesis is too broad, and the paragraph does not explain how the evidence supports the claim.",
 };
 
-const studentResponse = "Thank you for meeting with me. Could we look at the paragraph comment and identify one place where I should explain the evidence more clearly?";
+const officeHoursStudentResponse = "Thank you for meeting with me. Could we look at the paragraph comment and identify one place where I should explain the evidence more clearly?";
 
-function containsChinese(value: string) {
-  return /[\u3400-\u9fff]/u.test(value);
+const emailContext: EmailPracticeContext = {
+  course: "First-Year Writing Seminar",
+  recipient: "Professor Morgan",
+  purpose: "Ask for a brief meeting about my research topic",
+  whatHappened: "I narrowed my topic to two possible research questions.",
+  concern: "I worry that asking for help will sound unprepared.",
+  existingDraft: "Dear Professor Morgan,\n\nCould you help with my topic?\n\nBest,\nLi Wei",
+};
+
+const revisedEmail = "Dear Professor Morgan,\n\nI have narrowed my topic to two research questions. Could we meet briefly this week to discuss which one is focused enough for the assignment?\n\nBest,\nLi Wei";
+
+const groupContext: GroupPracticeContext = {
+  course: "Marketing presentation",
+  role: "Research coordinator",
+  projectSituation: "The group presents next week and needs to combine slides on Tuesday.",
+  conflict: "One research section is late and the owner has not replied to two messages.",
+  goal: "Agree on a fair task split and a new deadline",
+  concern: "I worry that being direct will sound controlling.",
+};
+
+const groupStudentResponse = "The research section is late. Could we agree on an owner and a Tuesday deadline? I can combine the final slides.";
+
+function containsNonEnglishScript(value: string) {
+  return /[^\p{Script=Latin}\p{Number}\p{Punctuation}\p{Separator}\p{Symbol}\p{Mark}\s]/u.test(value);
 }
 
 function requireLiveProvider() {
@@ -23,64 +49,107 @@ function requireLiveProvider() {
   return provider;
 }
 
-test("evaluates funded Kimi Context in English", async () => {
-  const provider = requireLiveProvider();
-  const metrics: Record<string, { model: string; elapsedMs: number }> = {};
+for (const run of LIVE_RUNS) {
+  test(`evaluates funded Kimi Office Hours journey in English, run ${run}`, async () => {
+    const provider = requireLiveProvider();
+    const metrics: Record<string, { model: string; elapsedMs: number }> = {};
 
-  async function measure<T>(name: string, operation: "context" | "practice" | "feedback", run: () => Promise<T>) {
-    const startedAt = Date.now();
-    const result = await run();
-    metrics[name] = { model: provider.modelFor(operation), elapsedMs: Date.now() - startedAt };
-    return result;
-  }
+    async function measure<T>(name: string, operation: "context" | "practice" | "feedback", task: () => Promise<T>) {
+      const startedAt = Date.now();
+      const result = await task();
+      metrics[name] = { model: provider.modelFor(operation), elapsedMs: Date.now() - startedAt };
+      return result;
+    }
 
-  const englishGuidance = await measure("contextEnglish", "context", () => provider.generateContextGuidance(englishContext));
-  expect(englishGuidance.literal_source).toContain(englishContext.professorFeedback);
-  expect(containsChinese(englishGuidance.campus_context)).toBe(false);
+    const guidance = await measure("context", "context", () => provider.generateContextGuidance(officeHoursContext));
+    expect(guidance.literal_source).toContain(officeHoursContext.professorFeedback);
+    expect(containsNonEnglishScript(JSON.stringify(guidance))).toBe(false);
 
-  console.log(JSON.stringify({ event: "kimi_live_evaluation", scope: "context", metrics }));
-});
+    const opening = await measure("practiceOpening", "practice", () => provider.generateProfessorReply(officeHoursContext, []));
+    expect(opening).not.toContain(officeHoursContext.concern);
+    expect(containsNonEnglishScript(opening)).toBe(false);
 
-test("evaluates funded Kimi Practice opening and reply", async () => {
-  const provider = requireLiveProvider();
-  const metrics: Record<string, { model: string; elapsedMs: number }> = {};
-  async function measure<T>(name: string, run: () => Promise<T>) {
-    const startedAt = Date.now();
-    const result = await run();
-    metrics[name] = { model: provider.modelFor("practice"), elapsedMs: Date.now() - startedAt };
-    return result;
-  }
+    const messages: PracticeMessage[] = [
+      { role: "assistant", content: opening },
+      { role: "user", content: officeHoursStudentResponse },
+    ];
+    const reply = await measure("practiceReply", "practice", () => provider.generateProfessorReply(officeHoursContext, messages));
+    expect(containsNonEnglishScript(reply)).toBe(false);
 
-  const opening = await measure("practiceOpening", () => provider.generateProfessorReply(englishContext, []));
-  expect(opening).not.toContain(englishContext.concern);
-  expect(containsChinese(opening)).toBe(false);
+    const completedMessages: PracticeMessage[] = [...messages, { role: "assistant", content: reply }];
+    const feedback = await measure("feedback", "feedback", () => provider.generateFeedback(officeHoursContext, completedMessages));
+    expect(feedback.strengths).toHaveLength(2);
+    expect(feedback.improvements).toHaveLength(2);
+    expect(feedback.improvements.every((item) => officeHoursStudentResponse.includes(item.original_response))).toBe(true);
+    expect(feedback.action_plan.questions.length).toBeGreaterThanOrEqual(2);
+    expect(containsNonEnglishScript(JSON.stringify(feedback))).toBe(false);
 
-  const messages: PracticeMessage[] = [
-    { role: "assistant", content: opening },
-    { role: "user", content: studentResponse },
-  ];
-  const professorReply = await measure("practiceReply", () => provider.generateProfessorReply(englishContext, messages));
-  expect(containsChinese(professorReply)).toBe(false);
-  console.log(JSON.stringify({ event: "kimi_live_evaluation", scope: "practice", metrics }));
-});
+    console.log(JSON.stringify({ event: "kimi_live_evaluation", scenario: "office_hours", run, metrics }));
+  });
 
-const completedMessages: PracticeMessage[] = [
-  { role: "assistant", content: "Welcome. What would be most useful for us to focus on today?" },
-  { role: "user", content: studentResponse },
-  { role: "assistant", content: "Yes. Which part of the paragraph would you like to examine first?" },
-];
+  test(`evaluates funded Kimi Email journey in English, run ${run}`, async () => {
+    const provider = requireLiveProvider();
+    const metrics: Record<string, { model: string; elapsedMs: number }> = {};
 
-test("evaluates funded Kimi Feedback in English", async () => {
-  const provider = requireLiveProvider();
-  const startedAt = Date.now();
-  const englishFeedback = await provider.generateFeedback(englishContext, completedMessages);
-  expect(englishFeedback.strengths).toHaveLength(2);
-  expect(englishFeedback.improvements).toHaveLength(2);
-  expect(englishFeedback.improvements.every((improvement) => studentResponse.includes(improvement.original_response))).toBe(true);
-  expect(englishFeedback.action_plan.questions.length).toBeGreaterThanOrEqual(2);
-  console.log(JSON.stringify({
-    event: "kimi_live_evaluation",
-    scope: "feedbackEnglish",
-    metrics: { feedbackEnglish: { model: provider.modelFor("feedback"), elapsedMs: Date.now() - startedAt } },
-  }));
-});
+    async function measure<T>(name: string, operation: "context" | "practice" | "feedback", task: () => Promise<T>) {
+      const startedAt = Date.now();
+      const result = await task();
+      metrics[name] = { model: provider.modelFor(operation), elapsedMs: Date.now() - startedAt };
+      return result;
+    }
+
+    const guidance = await measure("context", "context", () => provider.generateEmailContextGuidance(emailContext));
+    expect(guidance.literal_source).toContain(emailContext.existingDraft);
+    expect(containsNonEnglishScript(JSON.stringify(guidance))).toBe(false);
+
+    const hint = await measure("hint", "practice", () => provider.generateEmailHint(emailContext, emailContext.existingDraft));
+    expect(hint.sentence_starter.length).toBeLessThan(300);
+    expect(containsNonEnglishScript(JSON.stringify(hint))).toBe(false);
+
+    const feedback = await measure("feedback", "feedback", () => provider.generateEmailFeedback(emailContext, revisedEmail));
+    expect(feedback.strengths).toHaveLength(2);
+    expect(feedback.improvements).toHaveLength(2);
+    expect(feedback.improvements.every((item) => revisedEmail.includes(item.original_excerpt))).toBe(true);
+    expect(feedback.final_email.length).toBeGreaterThan(10);
+    expect(containsNonEnglishScript(JSON.stringify(feedback))).toBe(false);
+
+    console.log(JSON.stringify({ event: "kimi_live_evaluation", scenario: "email", run, metrics }));
+  });
+
+  test(`evaluates funded Kimi Group Project journey in English, run ${run}`, async () => {
+    const provider = requireLiveProvider();
+    const metrics: Record<string, { model: string; elapsedMs: number }> = {};
+
+    async function measure<T>(name: string, operation: "context" | "practice" | "feedback", task: () => Promise<T>) {
+      const startedAt = Date.now();
+      const result = await task();
+      metrics[name] = { model: provider.modelFor(operation), elapsedMs: Date.now() - startedAt };
+      return result;
+    }
+
+    const guidance = await measure("context", "context", () => provider.generateGroupContextGuidance(groupContext));
+    expect(guidance.literal_source).toContain(groupContext.conflict);
+    expect(containsNonEnglishScript(JSON.stringify(guidance))).toBe(false);
+
+    const opening = await measure("practiceOpening", "practice", () => provider.generateTeammateReply(groupContext, []));
+    expect(containsNonEnglishScript(opening)).toBe(false);
+
+    const messages: GroupPracticeMessage[] = [
+      { role: "assistant", content: opening },
+      { role: "user", content: groupStudentResponse },
+    ];
+    const reply = await measure("practiceReply", "practice", () => provider.generateTeammateReply(groupContext, messages));
+    expect(containsNonEnglishScript(reply)).toBe(false);
+
+    const completedMessages: GroupPracticeMessage[] = [...messages, { role: "assistant", content: reply }];
+    const feedback = await measure("feedback", "feedback", () => provider.generateGroupFeedback(groupContext, completedMessages));
+    expect(feedback.strengths).toHaveLength(2);
+    expect(feedback.improvements).toHaveLength(2);
+    expect(feedback.improvements.every((item) => groupStudentResponse.includes(item.original_response))).toBe(true);
+    expect(feedback.task_division.length).toBeGreaterThanOrEqual(2);
+    expect(feedback.follow_up_message.length).toBeGreaterThan(10);
+    expect(containsNonEnglishScript(JSON.stringify(feedback))).toBe(false);
+
+    console.log(JSON.stringify({ event: "kimi_live_evaluation", scenario: "group_project", run, metrics }));
+  });
+}

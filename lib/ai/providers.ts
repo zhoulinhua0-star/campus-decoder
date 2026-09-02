@@ -57,14 +57,26 @@ function parseStructuredOutput<T>(content: string | null | undefined, schema: Zo
   return parsed.data;
 }
 
+const NON_ENGLISH_SCRIPT = /[^\p{Script=Latin}\p{Number}\p{Punctuation}\p{Separator}\p{Symbol}\p{Mark}\s]/u;
+
+function assertEnglishOnly(fields: Array<[path: string, value: string]>) {
+  const invalidField = fields.find(([, value]) => NON_ENGLISH_SCRIPT.test(value));
+  if (invalidField) throw new AiProviderFailure("invalid_language", invalidField[0]);
+}
+
 function shouldRetryStructuredFailure(error: unknown) {
   return error instanceof AiProviderFailure && [
     "empty_response",
     "truncated",
     "invalid_json",
     "invalid_schema",
+    "invalid_language",
     "grounding_failed",
   ].includes(error.reason);
+}
+
+function shouldRetryLanguageFailure(error: unknown) {
+  return error instanceof AiProviderFailure && error.reason === "invalid_language";
 }
 
 export interface AiProvider {
@@ -169,15 +181,33 @@ export class KimiProvider implements AiProvider {
     if (!guidance.literal_source.includes(literalSource)) {
       throw new AiProviderFailure("grounding_failed");
     }
+    assertEnglishOnly([
+      ["campus_context", guidance.campus_context],
+      ["uncertainty", guidance.uncertainty],
+      ["constructive_next_move", guidance.constructive_next_move],
+    ]);
     return guidance;
   }
 
   async generateProfessorReply(context: PracticeContext, messages: PracticeMessage[]) {
+    try {
+      return await this.requestProfessorReply(context, messages, false);
+    } catch (error) {
+      if (!shouldRetryLanguageFailure(error)) throw error;
+      logAiRetry({ operation: "practice", model: this.modelFor("practice"), error });
+      return this.requestProfessorReply(context, messages, true);
+    }
+  }
+
+  private async requestProfessorReply(context: PracticeContext, messages: PracticeMessage[], retry: boolean) {
     const model = this.modelFor("practice");
     const completion = await this.client.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: OFFICE_HOURS_ROLEPLAY_PROMPT },
+        {
+          role: "system",
+          content: `${OFFICE_HOURS_ROLEPLAY_PROMPT}${retry ? "\nThe previous response used a non-English script. Respond only in natural English." : ""}`,
+        },
         { role: "user", content: buildContextPrompt(context) },
         ...messages.map((message) => ({ role: message.role, content: message.content })),
       ],
@@ -190,6 +220,7 @@ export class KimiProvider implements AiProvider {
 
     const professorReply = completion.choices[0]?.message.content?.trim();
     if (!professorReply) throw new AiProviderFailure("empty_response");
+    assertEnglishOnly([["professor_reply", professorReply]]);
     return professorReply;
   }
 
@@ -227,6 +258,25 @@ export class KimiProvider implements AiProvider {
     if (report.improvements.some((improvement) => !studentResponses.some((response) => response.includes(improvement.original_response)))) {
       throw new AiProviderFailure("grounding_failed");
     }
+    assertEnglishOnly([
+      ["summary", report.summary],
+      ...report.strengths.map((value, index) => [`strengths.${index}`, value] as [string, string]),
+      ...report.improvements.flatMap((improvement, index) => [
+        [`improvements.${index}.observation`, improvement.observation] as [string, string],
+        [`improvements.${index}.why_it_matters`, improvement.why_it_matters] as [string, string],
+        [`improvements.${index}.suggested_response`, improvement.suggested_response] as [string, string],
+      ]),
+      ...report.campus_context.flatMap((item, index) => [
+        [`campus_context.${index}.literal_meaning`, item.literal_meaning] as [string, string],
+        [`campus_context.${index}.likely_context`, item.likely_context] as [string, string],
+        [`campus_context.${index}.constructive_next_move`, item.constructive_next_move] as [string, string],
+      ]),
+      ["action_plan.goal", report.action_plan.goal],
+      ["action_plan.opening", report.action_plan.opening],
+      ...report.action_plan.questions.map((value, index) => [`action_plan.questions.${index}`, value] as [string, string]),
+      ...report.action_plan.evidence_to_bring.map((value, index) => [`action_plan.evidence_to_bring.${index}`, value] as [string, string]),
+      ["action_plan.closing", report.action_plan.closing],
+    ]);
     return report;
   }
 
@@ -248,7 +298,7 @@ export class KimiProvider implements AiProvider {
         { role: "system", content: EMAIL_CONTEXT_PROMPT },
         {
           role: "user",
-          content: `${buildEmailGuidanceInput(context)}${retry ? "\nThis is a retry after an invalid response. Return only the exact four-field JSON object and preserve the entire existing draft verbatim." : ""}`,
+          content: `${buildEmailGuidanceInput(context)}${retry ? "\nThis is a retry after an invalid response. Return only the exact four-field JSON object in English and preserve the entire existing draft verbatim." : ""}`,
         },
       ],
       response_format: zodResponseFormat(emailContextGuidanceSchema, "email_context_guidance"),
@@ -260,6 +310,11 @@ export class KimiProvider implements AiProvider {
     if (!guidance.literal_source.includes(context.existingDraft.trim())) {
       throw new AiProviderFailure("grounding_failed");
     }
+    assertEnglishOnly([
+      ["campus_context", guidance.campus_context],
+      ["uncertainty", guidance.uncertainty],
+      ["constructive_next_move", guidance.constructive_next_move],
+    ]);
     return guidance;
   }
 
@@ -281,7 +336,7 @@ export class KimiProvider implements AiProvider {
         { role: "system", content: EMAIL_HINT_PROMPT },
         {
           role: "user",
-          content: `${buildEmailHintInput(context, draft)}${retry ? "\nThis is a retry after an invalid response. Return only the exact four-field JSON hint and do not write a complete email." : ""}`,
+          content: `${buildEmailHintInput(context, draft)}${retry ? "\nThis is a retry after an invalid response. Return only the exact four-field JSON hint in English and do not write a complete email." : ""}`,
         },
       ],
       response_format: zodResponseFormat(emailHintSchema, "email_revision_hint"),
@@ -289,7 +344,13 @@ export class KimiProvider implements AiProvider {
     }, { timeout: KIMI_REQUEST_TIMEOUTS.practice, maxRetries: 1 });
 
     if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
-    return parseStructuredOutput(completion.choices[0]?.message.content, emailHintSchema);
+    const hint = parseStructuredOutput(completion.choices[0]?.message.content, emailHintSchema);
+    assertEnglishOnly([
+      ["observation", hint.observation],
+      ["revision_prompt", hint.revision_prompt],
+      ["sentence_starter", hint.sentence_starter],
+    ]);
+    return hint;
   }
 
   async generateEmailFeedback(context: EmailPracticeContext, revisedDraft: string) {
@@ -310,7 +371,7 @@ export class KimiProvider implements AiProvider {
         { role: "system", content: EMAIL_FEEDBACK_PROMPT },
         {
           role: "user",
-          content: `${buildEmailFeedbackInput(context, revisedDraft)}${retry ? "\nThis is a retry after an invalid response. Follow the exact JSON fields, types, counts, and verbatim excerpt requirements." : ""}`,
+          content: `${buildEmailFeedbackInput(context, revisedDraft)}${retry ? "\nThis is a retry after an invalid response. Follow the exact JSON fields, types, counts, English-only requirement, and verbatim excerpt requirements." : ""}`,
         },
       ],
       response_format: zodResponseFormat(emailFeedbackReportSchema, "email_feedback"),
@@ -322,6 +383,18 @@ export class KimiProvider implements AiProvider {
     if (report.improvements.some((improvement) => !revisedDraft.includes(improvement.original_excerpt))) {
       throw new AiProviderFailure("grounding_failed");
     }
+    assertEnglishOnly([
+      ["summary", report.summary],
+      ...report.strengths.map((value, index) => [`strengths.${index}`, value] as [string, string]),
+      ...report.improvements.flatMap((improvement, index) => [
+        [`improvements.${index}.observation`, improvement.observation] as [string, string],
+        [`improvements.${index}.why_it_matters`, improvement.why_it_matters] as [string, string],
+        [`improvements.${index}.suggested_edit`, improvement.suggested_edit] as [string, string],
+      ]),
+      ["campus_context", report.campus_context],
+      ["subject_line", report.subject_line],
+      ["final_email", report.final_email],
+    ]);
     return report;
   }
 
@@ -343,7 +416,7 @@ export class KimiProvider implements AiProvider {
         { role: "system", content: GROUP_CONTEXT_PROMPT },
         {
           role: "user",
-          content: `${buildGroupContextGuidanceInput(context)}${retry ? "\nThis is a retry after an invalid response. Return only the exact six-field JSON object and preserve the entire conflict description verbatim." : ""}`,
+          content: `${buildGroupContextGuidanceInput(context)}${retry ? "\nThis is a retry after an invalid response. Return only the exact six-field JSON object in English and preserve the entire conflict description verbatim." : ""}`,
         },
       ],
       response_format: zodResponseFormat(groupContextGuidanceSchema, "group_context_guidance"),
@@ -353,15 +426,35 @@ export class KimiProvider implements AiProvider {
     if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
     const guidance = parseStructuredOutput(completion.choices[0]?.message.content, groupContextGuidanceSchema);
     if (!guidance.literal_source.includes(context.conflict.trim())) throw new AiProviderFailure("grounding_failed");
+    assertEnglishOnly([
+      ["task_division_context", guidance.task_division_context],
+      ["follow_up_context", guidance.follow_up_context],
+      ["disagreement_context", guidance.disagreement_context],
+      ["uncertainty", guidance.uncertainty],
+      ["constructive_next_move", guidance.constructive_next_move],
+    ]);
     return guidance;
   }
 
   async generateTeammateReply(context: GroupPracticeContext, messages: GroupPracticeMessage[]) {
+    try {
+      return await this.requestTeammateReply(context, messages, false);
+    } catch (error) {
+      if (!shouldRetryLanguageFailure(error)) throw error;
+      logAiRetry({ operation: "practice", model: this.modelFor("practice"), error });
+      return this.requestTeammateReply(context, messages, true);
+    }
+  }
+
+  private async requestTeammateReply(context: GroupPracticeContext, messages: GroupPracticeMessage[], retry: boolean) {
     const model = this.modelFor("practice");
     const completion = await this.client.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: GROUP_ROLEPLAY_PROMPT },
+        {
+          role: "system",
+          content: `${GROUP_ROLEPLAY_PROMPT}${retry ? "\nThe previous response used a non-English script. Respond only in natural English." : ""}`,
+        },
         { role: "user", content: buildGroupContext(context) },
         ...messages.map((message) => ({ role: message.role, content: message.content })),
       ],
@@ -371,6 +464,7 @@ export class KimiProvider implements AiProvider {
     if (completion.choices[0]?.finish_reason === "length") throw new AiProviderFailure("truncated");
     const teammateReply = completion.choices[0]?.message.content?.trim();
     if (!teammateReply) throw new AiProviderFailure("empty_response");
+    assertEnglishOnly([["teammate_reply", teammateReply]]);
     return teammateReply;
   }
 
@@ -392,7 +486,7 @@ export class KimiProvider implements AiProvider {
         { role: "system", content: GROUP_FEEDBACK_PROMPT },
         {
           role: "user",
-          content: `${buildGroupFeedbackInput(context, messages)}${retry ? "\nThis is a retry after an invalid response. Follow the exact JSON fields, types, counts, and verbatim transcript-grounding requirements." : ""}`,
+          content: `${buildGroupFeedbackInput(context, messages)}${retry ? "\nThis is a retry after an invalid response. Follow the exact JSON fields, types, counts, English-only requirement, and verbatim transcript-grounding requirements." : ""}`,
         },
       ],
       response_format: zodResponseFormat(groupFeedbackReportSchema, "group_project_feedback"),
@@ -405,6 +499,26 @@ export class KimiProvider implements AiProvider {
     if (report.improvements.some((improvement) => !studentResponses.some((response) => response.includes(improvement.original_response)))) {
       throw new AiProviderFailure("grounding_failed");
     }
+    assertEnglishOnly([
+      ["summary", report.summary],
+      ...report.strengths.map((value, index) => [`strengths.${index}`, value] as [string, string]),
+      ...report.improvements.flatMap((improvement, index) => [
+        [`improvements.${index}.observation`, improvement.observation] as [string, string],
+        [`improvements.${index}.why_it_matters`, improvement.why_it_matters] as [string, string],
+        [`improvements.${index}.suggested_response`, improvement.suggested_response] as [string, string],
+      ]),
+      ["campus_context", report.campus_context],
+      ["conversation_plan.opening", report.conversation_plan.opening],
+      ...report.conversation_plan.points_to_raise.map((value, index) => [`conversation_plan.points_to_raise.${index}`, value] as [string, string]),
+      ...report.conversation_plan.questions.map((value, index) => [`conversation_plan.questions.${index}`, value] as [string, string]),
+      ["conversation_plan.closing", report.conversation_plan.closing],
+      ...report.task_division.flatMap((item, index) => [
+        [`task_division.${index}.owner`, item.owner] as [string, string],
+        [`task_division.${index}.task`, item.task] as [string, string],
+        [`task_division.${index}.deadline`, item.deadline] as [string, string],
+      ]),
+      ["follow_up_message", report.follow_up_message],
+    ]);
     return report;
   }
 

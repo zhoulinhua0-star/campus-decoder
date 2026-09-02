@@ -168,7 +168,7 @@ The provider-neutral route contracts are:
 - `POST /api/group/practice` — Group Project opening or next teammate turn.
 - `POST /api/group/feedback` — grounded collaboration feedback and three editable action artifacts.
 
-Context and Feedback allow up to 45 seconds per request; Practice and Hint use a 20-second timeout. Structured, empty, truncated, schema-invalid, or ungrounded output is retried where appropriate and then falls back safely. Privacy-safe telemetry records operation, model, reason, safe schema paths, and elapsed time without student inputs, transcripts, drafts, credentials, or raw errors.
+Context and Feedback allow up to 45 seconds per request; Practice and Hint use a 20-second timeout. Structured, empty, truncated, schema-invalid, ungrounded, or non-English-script output is retried where appropriate and then falls back safely. Verbatim student-source and transcript fields are preserved rather than treated as generated coaching. Privacy-safe telemetry records operation, model, reason, safe schema paths, and elapsed time without student inputs, transcripts, drafts, credentials, or raw errors.
 
 ## Verify changes
 
@@ -185,7 +185,7 @@ Install Playwright browsers once if needed:
 npx playwright install chromium webkit
 ```
 
-The current suite reports **50 passing checks** across five Playwright projects, with 20 intentional project-specific skips. Coverage includes:
+The current suite reports **53 passing checks** across five Playwright projects, with 20 intentional project-specific skips. Coverage includes:
 
 - neutral homepage entry points and three equal-size scenario cards;
 - complete Office Hours, Emailing a Professor, and Group Project Conflict journeys;
@@ -258,7 +258,7 @@ types/
 
 ## Current limits
 
-- Emailing a Professor and Group Project Conflict have provider-contract coverage but still need repeated funded live-Kimi evaluation for English quality, schema reliability, grounding, and latency.
+- The funded live-Kimi suite covers all three journeys with three repeated runs each; the sample remains intentionally small, so production retry/fallback frequency and latency still need monitoring.
 - Voice input is available only in Office Hours and depends on browser speech-recognition support, microphone permission, and the browser’s speech service. Typed input remains universal.
 - Desktop WebKit automation approximates Safari’s engine; real Safari permissions, speech services, and microphone hardware still require hands-on verification.
 - The MVP has no authentication, database, saved history, analytics, or progress tracking.
@@ -266,7 +266,7 @@ types/
 
 ## Next priorities
 
-1. Run hands-on Emailing a Professor and Group Project Conflict QA in live Kimi mode and review quality, latency, grounding, and fallback behavior.
+1. Run hands-on Emailing a Professor and Group Project Conflict QA in live Kimi mode and review coaching quality on the actual demo devices.
 2. Validate all three complete journeys with Chinese and other international students new to U.S. university culture.
 3. Test English dictation on the real Chrome and Safari devices planned for the demo.
 4. Capture updated production screenshots and record the under-five-minute demo video.

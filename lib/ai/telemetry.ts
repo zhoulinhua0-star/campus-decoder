@@ -9,6 +9,7 @@ export type AiFailureReason =
   | "truncated"
   | "invalid_json"
   | "invalid_schema"
+  | "invalid_language"
   | "grounding_failed"
   | "unknown";
 
