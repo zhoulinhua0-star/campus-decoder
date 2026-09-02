@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://campus-decoder.zhoulinhua0.workers.dev"><strong>Try the live demo</strong></a>
+  <a href="https://campusdecoder.com"><strong>Try the live demo</strong></a>
   ·
   <a href="#three-journeys-one-learning-loop">Explore the journeys</a>
   ·
@@ -26,7 +26,7 @@
 
 ## Choose a campus moment
 
-Open the **[live scenario chooser](https://campus-decoder.zhoulinhua0.workers.dev/practice)** and pick the campus moment you want to handle differently. No account or setup is required.
+Open the **[live scenario chooser](https://campusdecoder.com/practice)** and pick the campus moment you want to handle differently. No account or setup is required.
 
 | Scenario | What the student practices | Repository status |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ The chooser gives all three complete scenarios the same visual hierarchy.
 | --- | --- |
 | Complete journeys | Three, each using Setup → Context → Practice → Feedback → Action |
 | Provider contracts | Demo and Kimi paths cover all three scenarios with Zod validation, transcript grounding, retries, and safe fallback |
-| Automated regression | **53 passing checks**, 20 intentional project-specific skips, 0 failures |
+| Automated regression | **54 passing checks**, 20 intentional project-specific skips, 0 failures |
 | Funded live evaluation | **9/9 Kimi runs passed**: three complete runs for each scenario |
 | Production smoke | Five public pages and all nine API routes returned HTTP 200; every API response remained in live mode with complete English output |
 | Responsive coverage | 375px portrait, mobile landscape, 768px tablet, and 1440px desktop |
@@ -191,7 +191,7 @@ Install Playwright browsers once if needed:
 npx playwright install chromium webkit
 ```
 
-The current suite reports **53 passing checks** across five Playwright projects, with 20 intentional project-specific skips. Coverage includes:
+The current suite reports **54 passing checks** across five Playwright projects, with 20 intentional project-specific skips. Coverage includes:
 
 - neutral homepage entry points and three equal-size scenario cards;
 - complete Office Hours, Emailing a Professor, and Group Project Conflict journeys;
@@ -205,7 +205,9 @@ The current suite reports **53 passing checks** across five Playwright projects,
 
 ## Deploy to Cloudflare Workers
 
-Current production demo: **[campus-decoder.zhoulinhua0.workers.dev](https://campus-decoder.zhoulinhua0.workers.dev)**
+Current production demo: **[campusdecoder.com](https://campusdecoder.com)**
+
+The custom domain points directly to the production `campus-decoder` Worker. Cloudflare manages DNS and HTTPS, and `www.campusdecoder.com` permanently redirects to the canonical root domain.
 
 The production Worker contains all three complete journeys. Post-deployment smoke checks returned HTTP 200 for the homepage, scenario chooser, and all three journey pages. All nine API routes returned `mode: live`, complete English output, and the expected structured fields without using Demo fallback.
 
