@@ -34,6 +34,7 @@ function getGeneralGuidance(context: GroupPracticeContext): GroupContextGuidance
 export function GroupProjectExperience() {
   const [stage, setStage] = useState<Stage>("Setup");
   const previousStageRef = useRef<Stage>(stage);
+  const slowDecodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [context, setContext] = useState(emptyContext);
   const [contextSource, setContextSource] = useState<"mine" | "sample">("mine");
   const [messages, setMessages] = useState<GroupPracticeMessage[]>([]);
@@ -44,6 +45,7 @@ export function GroupProjectExperience() {
   const [notice, setNotice] = useState<string | null>(null);
   const [contextNotice, setContextNotice] = useState<string | null>(null);
   const [isDecoding, setIsDecoding] = useState(false);
+  const [isSlowDecoding, setIsSlowDecoding] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isFinishing, setIsFinishing] = useState(false);
 
@@ -52,6 +54,10 @@ export function GroupProjectExperience() {
     if (previousStageRef.current !== stage) requestAnimationFrame(() => document.querySelector<HTMLElement>("#group-project-stage h1")?.focus({ preventScroll: true }));
     previousStageRef.current = stage;
   }, [stage]);
+
+  useEffect(() => () => {
+    if (slowDecodeTimerRef.current) clearTimeout(slowDecodeTimerRef.current);
+  }, []);
 
   function resetGeneratedState() {
     setMessages([]); setGuidance(null); setContextMode(null); setContextNotice(null); setReport(null); setFeedbackMode(null); setNotice(null);
@@ -66,6 +72,12 @@ export function GroupProjectExperience() {
 
   async function decodeContext() {
     setStage("Context"); setIsDecoding(true); setGuidance(null); setContextMode(null); setContextNotice(null);
+    setIsSlowDecoding(false);
+    if (slowDecodeTimerRef.current) clearTimeout(slowDecodeTimerRef.current);
+    slowDecodeTimerRef.current = setTimeout(() => {
+      setIsSlowDecoding(true);
+      slowDecodeTimerRef.current = null;
+    }, 5_000);
     try {
       const response = await fetch("/api/group/context", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ context }) });
       if (!response.ok) throw new Error("Group context request failed");
@@ -73,7 +85,12 @@ export function GroupProjectExperience() {
       setGuidance(data.guidance); setContextMode(data.mode); setContextNotice(data.notice);
     } catch {
       setGuidance(getGeneralGuidance(context)); setContextNotice("Situation-specific guidance could not load, so general group-project guidance is shown.");
-    } finally { setIsDecoding(false); }
+    } finally {
+      if (slowDecodeTimerRef.current) clearTimeout(slowDecodeTimerRef.current);
+      slowDecodeTimerRef.current = null;
+      setIsSlowDecoding(false);
+      setIsDecoding(false);
+    }
   }
 
   async function beginPractice() {
@@ -115,5 +132,5 @@ export function GroupProjectExperience() {
 
   function restart() { setMessages([]); setReport(null); setFeedbackMode(null); setNotice(null); setStage("Context"); }
 
-  return <><ProgressSteps current={stage} /><div id="group-project-stage">{stage === "Setup" ? <GroupSetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={decodeContext} onSelectContextSource={selectContextSource} /> : null}{stage === "Context" ? <GroupContextStage context={context} guidance={guidance} isLoading={isDecoding} mode={contextMode} notice={contextNotice} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}{stage === "Practice" ? <GroupPracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}{stage === "Feedback" && report && feedbackMode ? <GroupFeedbackStage mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}{stage === "Action" && report && feedbackMode ? <GroupActionStage mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}</div></>;
+  return <><ProgressSteps current={stage} /><div id="group-project-stage">{stage === "Setup" ? <GroupSetupStage context={context} contextSource={contextSource} onChange={updateContext} onContinue={decodeContext} onSelectContextSource={selectContextSource} /> : null}{stage === "Context" ? <GroupContextStage context={context} guidance={guidance} isLoading={isDecoding} isSlowLoading={isSlowDecoding} mode={contextMode} notice={contextNotice} onBack={() => setStage("Setup")} onContinue={beginPractice} /> : null}{stage === "Practice" ? <GroupPracticeStage context={context} isFinishing={isFinishing} isSending={isSending} messages={messages} notice={notice} onBack={() => setStage("Context")} onFinish={finishPractice} onSend={sendMessage} /> : null}{stage === "Feedback" && report && feedbackMode ? <GroupFeedbackStage mode={feedbackMode} notice={notice} onContinue={() => setStage("Action")} report={report} /> : null}{stage === "Action" && report && feedbackMode ? <GroupActionStage mode={feedbackMode} onBack={() => setStage("Feedback")} onRestart={restart} report={report} /> : null}</div></>;
 }

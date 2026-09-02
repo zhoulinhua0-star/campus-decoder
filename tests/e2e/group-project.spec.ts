@@ -60,3 +60,29 @@ test("validates required group setup fields with a focusable error summary", asy
   await expect(page.getByText("Describe your role or current responsibility.")).toBeVisible();
   await expect(page.getByText("Describe the specific conflict or coordination problem.")).toBeVisible();
 });
+
+test("explains a delayed Group Context response", async ({ page }) => {
+  let releaseContextRequest: (() => void) | undefined;
+  const contextRequestGate = new Promise<void>((resolve) => { releaseContextRequest = resolve; });
+
+  await page.clock.install();
+  await page.route("**/api/group/context", async (route) => {
+    await contextRequestGate;
+    await route.abort();
+  });
+  await page.goto("/practice/group-project");
+  await page.getByRole("button", { name: /Try the sample project/ }).click();
+  await page.getByRole("button", { name: "See group guidance" }).click();
+
+  const loadingStatus = page.getByRole("status");
+  await expect(loadingStatus).toContainText("Preparing your collaboration guidance");
+  await expect(loadingStatus).toHaveAttribute("aria-busy", "true");
+  await expect(page.getByRole("button", { name: "Preparing guidance" })).toBeDisabled();
+  await expect(page.getByText("This may take a few moments. Your setup is saved.")).toHaveCount(0);
+
+  await page.clock.fastForward(5_000);
+  await expect(page.getByText("This may take a few moments. Your setup is saved.")).toBeVisible();
+
+  releaseContextRequest?.();
+  await expect(page.getByRole("heading", { name: "Ownership works best when it is explicit" })).toBeVisible();
+});
